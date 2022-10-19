@@ -14,7 +14,7 @@ TEST_SUITE_LABEL ("makekeys");
 
 static void test_makekeys(CuTest *test){
     TEST_START;
-    unsigned char * status = ecc_keys();
+    unsigned char * status = yet_another();
     CuAssertPtrNotNull(test, status);
     //CuAssertIntEquals (test, 0, status);
 }

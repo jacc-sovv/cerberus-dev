@@ -344,49 +344,6 @@ void mbedtls_param_failed( const char *failure_condition,
 
 
 
-
-/**
- * Allocate and zeroize a buffer.
- *
- * If the size if zero, a pointer to a zeroized 1-byte buffer is returned.
- *
- * For convenience, dies if allocation fails.
- */
-
-
-
-
-/**
- * This function just returns data from rand().
- * Although predictable and often similar on multiple
- * runs, this does not result in identical random on
- * each run. So do not use this if the results of a
- * test depend on the random data that is generated.
- *
- * rng_state shall be NULL.
- */
-// static int rnd_std_rand( void *rng_state, unsigned char *output, size_t len )
-// {
-// #if !defined(__OpenBSD__)
-//     size_t i;
-
-//     if( rng_state != NULL )
-//         rng_state  = NULL;
-
-//     for( i = 0; i < len; ++i )
-//         output[i] = rand();
-// #else
-//     if( rng_state != NULL )
-//         rng_state = NULL;
-
-//     arc4random_buf( output, len );
-// #endif /* !OpenBSD */
-
-//     return( 0 );
-// }
-
-
-
 typedef struct
 {
     unsigned char *buf;
@@ -408,47 +365,7 @@ typedef struct
     uint32_t v0, v1;
 } rnd_pseudo_info;
 
-/**
- * This function returns random based on a pseudo random function.
- * This means the results should be identical on all systems.
- * Pseudo random is based on the XTEA encryption algorithm to
- * generate pseudorandom.
- *
- * rng_state shall be a pointer to a rnd_pseudo_info structure.
- */
-// static int rnd_pseudo_rand( void *rng_state, unsigned char *output, size_t len )
-// {
-//     rnd_pseudo_info *info = (rnd_pseudo_info *) rng_state;
-//     uint32_t i, *k, sum, delta=0x9E3779B9;
-//     unsigned char result[4], *out = output;
 
-//     if( rng_state == NULL )
-//         return( rnd_std_rand( NULL, output, len ) );
-
-//     k = info->key;
-
-//     while( len > 0 )
-//     {
-//         size_t use_len = ( len > 4 ) ? 4 : len;
-//         sum = 0;
-
-//         for( i = 0; i < 32; i++ )
-//         {
-//             info->v0 += ( ( ( info->v1 << 4 ) ^ ( info->v1 >> 5 ) )
-//                             + info->v1 ) ^ ( sum + k[sum & 3] );
-//             sum += delta;
-//             info->v1 += ( ( ( info->v0 << 4 ) ^ ( info->v0 >> 5 ) )
-//                             + info->v0 ) ^ ( sum + k[( sum>>11 ) & 3] );
-//         }
-
-//         PUT_UINT32_BE( info->v0, result, 0 );
-//         memcpy( out, result, use_len );
-//         len -= use_len;
-//         out += 4;
-//     }
-
-//     return( 0 );
-// }
 
 int hexcmp( uint8_t * a, uint8_t * b, uint32_t a_len, uint32_t b_len )
 {
@@ -477,7 +394,7 @@ int hexcmp( uint8_t * a, uint8_t * b, uint32_t a_len, uint32_t b_len )
 unsigned char pub_key_buffer[1000];
 size_t pub_key_len;
 unsigned char * yet_another(){
-mbedtls_ecdh_context ctx_cli, ctx_srv;
+    mbedtls_ecdh_context ctx_cli, ctx_srv;
     mbedtls_entropy_context entropy;
     mbedtls_ctr_drbg_context ctr_drbg;
     unsigned char cli_to_srv_x[BUF_BYTES];
@@ -535,29 +452,30 @@ mbedtls_ecdh_context ctx_cli, ctx_srv;
                                        mbedtls_ctr_drbg_random, // RNG function - countermeasure against timing attacks
                                        &ctr_drbg );             // RNG parameter
 
-mbedtls_mpi_lset( &ctx_cli.Qp.Z, 1 );    
-mbedtls_mpi_read_binary( &ctx_cli.Qp.X, srv_to_cli_x, BUF_BYTES );
-mbedtls_mpi_read_binary( &ctx_cli.Qp.Y, srv_to_cli_y, BUF_BYTES );
-//Use mbedtls_ecp_point_read_string to make Qp1, see if that's the same as Qp after we generate shared secret
+    mbedtls_mpi_lset( &ctx_cli.Qp.Z, 1 );    
+    mbedtls_mpi_read_binary( &ctx_cli.Qp.X, srv_to_cli_x, BUF_BYTES );
+    mbedtls_mpi_read_binary( &ctx_cli.Qp.Y, srv_to_cli_y, BUF_BYTES );
+    //Use mbedtls_ecp_point_read_string to make Qp1, see if that's the same as Qp after we generate shared secret
 
-//This writes our Qp into a character buffer
-size_t x_len;
-unsigned char xbuff[1000];
-mbedtls_ecp_point_write_binary(&ctx_cli.grp, &ctx_cli.Qp, MBEDTLS_ECP_PF_COMPRESSED, &x_len, xbuff, sizeof(xbuff));
+    //This writes our Qp into a character buffer
+    size_t x_len;
+    unsigned char xbuff[1000];
+    mbedtls_ecp_point_write_binary(&ctx_cli.grp, &ctx_cli.Qp, MBEDTLS_ECP_PF_COMPRESSED, &x_len, xbuff, sizeof(xbuff));
 
-//Use this character buffer to compute a new point, check the shared secret, be sure they are same
-printf("About to print XBUFF\n");
-printf("len is %d", x_len);
-for(int i = 0; i < (int)x_len; i++){
-    printf("%c", xbuff[i]);
-}
-printf("\n");
+    //Use this character buffer to compute a new point, check the shared secret, be sure they are same
+    printf("About to print XBUFF\n");
+    printf("len is %d", x_len);
+    for(int i = 0; i < (int)x_len; i++){
+        printf("%c", xbuff[i]);
+    }
+    printf("\n");
 
-//Also write it to global variable buffer
+    //Also write it to global variable buffer
 
-mbedtls_ecp_point_write_binary(&ctx_cli.grp, &ctx_cli.Qp, MBEDTLS_ECP_PF_COMPRESSED, &pub_key_len, pub_key_buffer, sizeof(pub_key_buffer));
+    mbedtls_ecp_point_write_binary(&ctx_cli.grp, &ctx_cli.Qp, MBEDTLS_ECP_PF_COMPRESSED, &pub_key_len, pub_key_buffer, sizeof(pub_key_buffer));
     printf("Printing pub key bufffer\n");
     printf("len is %d", pub_key_len);
+    printf("In makekeys, using strlen, pubkey is %d", strlen((const char*)pub_key_buffer));
     for(int i = 0; i < (int)pub_key_len; i++){
         printf("%c", pub_key_buffer[i]);
     }
@@ -565,24 +483,19 @@ mbedtls_ecp_point_write_binary(&ctx_cli.grp, &ctx_cli.Qp, MBEDTLS_ECP_PF_COMPRES
 
 
 
-//This tests that the character buffer is sufficient, and we can generate a new point from that character buffer.
-mbedtls_ecp_point testPoint;
-mbedtls_ecp_point_init(&testPoint);
-mbedtls_ecp_point_read_binary(&ctx_cli.grp, &testPoint, xbuff, x_len);
+    //This tests that the character buffer is sufficient, and we can generate a new point from that character buffer.
+    mbedtls_ecp_point testPoint;
+    mbedtls_ecp_point_init(&testPoint);
+    mbedtls_ecp_point_read_binary(&ctx_cli.grp, &testPoint, xbuff, x_len);
 
 
-//This tests that our new public key is equivalent to the old one, generates a shared secret
-mbedtls_ecdh_compute_shared( &ctx_cli.grp, &ctx_cli.z, &ctx_cli.Qp, &ctx_cli.d,
-                                       mbedtls_ctr_drbg_random, &ctr_drbg );
-
-
-//Overrides other server shared secret to test that our new public key generates a correct sared secret
-// mbedtls_ecdh_compute_shared( &ctx_cli.grp, &ctx_srv.z, &testPoint, &ctx_cli.d,
-//                                        mbedtls_ctr_drbg_random, &ctr_drbg );
+    //This tests that our new public key is equivalent to the old one, generates a shared secret
+    mbedtls_ecdh_compute_shared( &ctx_cli.grp, &ctx_cli.z, &ctx_cli.Qp, &ctx_cli.d,
+                                        mbedtls_ctr_drbg_random, &ctr_drbg );
 
 
 
-//Great! Now ctx_cli.z is a point representing the shared secret, it has it's own X and Y coords.
+    //Great! Now ctx_cli.z is a point representing the shared secret, it has it's own X and Y coords.
     char strz[512];
     size_t len;
     int stat = mbedtls_mpi_write_string(&ctx_cli.z, 10, strz, sizeof(strz), &len);
@@ -591,70 +504,68 @@ mbedtls_ecdh_compute_shared( &ctx_cli.grp, &ctx_cli.z, &ctx_cli.Qp, &ctx_cli.d,
     }
     
 
-//Awesome! We now have our shared secret generated.
-//Need to perform symmetric encryption with this shared key
-int same = mbedtls_mpi_cmp_mpi( &ctx_cli.z, &ctx_srv.z );
-printf("Is the shared secret the same (0)? %d\n", same);
-printf("Shared secret is \n");
-for(int i = 0; i < (int)len; i++){
-    printf("%c", strz[i]);
-}
-printf("\n");
+    //Awesome! We now have our shared secret generated.
+    //Need to perform symmetric encryption with this shared key
+    int same = mbedtls_mpi_cmp_mpi( &ctx_cli.z, &ctx_srv.z );
+    printf("Is the shared secret the same (0)? %d\n", same);
+    printf("Shared secret is \n");
+    for(int i = 0; i < (int)len; i++){
+        printf("%c", strz[i]);
+    }
+    printf("\n");
 
 
-//AES Key generation part:
-mbedtls_aes_context aes_ctx;
-mbedtls_aes_init(&aes_ctx);
-unsigned char key[32];
-memcpy(key, strz, 32);
+    //AES Key generation part:
+    mbedtls_aes_context aes_ctx;
+    mbedtls_aes_init(&aes_ctx);
+    unsigned char key[32];
+    memcpy(key, strz, 32);
 
-unsigned char iv1[16];
-unsigned char iv2[16];
-unsigned char input[128];
-unsigned char output[128];
+    unsigned char iv1[16];
+    unsigned char iv2[16];
+    unsigned char input[128];
+    unsigned char output[128];
 
-memcpy(input, "012345678901234567890123456789012345678", 39);
+    memcpy(input, "012345678901234567890123456789012345678", 39);
 
-mbedtls_aes_setkey_enc(&aes_ctx, key, 256);
-mbedtls_aes_crypt_cbc(&aes_ctx, MBEDTLS_AES_ENCRYPT, 48, iv1, input, output);
+    mbedtls_aes_setkey_enc(&aes_ctx, key, 256);
+    mbedtls_aes_crypt_cbc(&aes_ctx, MBEDTLS_AES_ENCRYPT, 48, iv1, input, output);
 
-printf("\n");
-printf("printing input: ");
-for(int i = 0; i < 40; i++){
-    printf("%c", input[i]);
-}
-printf("\n\n");
-printf("\n");
-printf("printing output: ");
-for(int i = 0; i < 48; i++){
-    printf("%c", output[i]);
-}
-printf("\n");
+    printf("\n");
+    printf("printing input: ");
+    for(int i = 0; i < 40; i++){
+        printf("%c", input[i]);
+    }
+    printf("\n\n");
+    printf("\n");
+    printf("printing output: ");
+    for(int i = 0; i < 48; i++){
+        printf("%c", output[i]);
+    }
+    printf("\n\n\n");
 
-//In summary, this creates a shared key using ecdh, uses that key to create an AES key, and encrypts
-//this chunk of test. The encryption is not base64 encoded. 
-//Similarly, the output of the x and y 
+    //In summary, this creates a shared key using ecdh, uses that key to create an AES key, and encrypts
+    //this chunk of test. The encryption is not base64 encoded. 
+    //Similarly, the output of the x and y 
 
-//Decrypting:
-unsigned char decrypted_output[128];
-mbedtls_aes_setkey_dec( &aes_ctx, key, 256 );
-mbedtls_aes_crypt_cbc(&aes_ctx, MBEDTLS_AES_DECRYPT, 48, iv2, output, decrypted_output);
+    //Decrypting:
+    unsigned char decrypted_output[128];
+    mbedtls_aes_setkey_dec( &aes_ctx, key, 256 );
+    mbedtls_aes_crypt_cbc(&aes_ctx, MBEDTLS_AES_DECRYPT, 48, iv2, output, decrypted_output);
 
-printf("printing output2: ");
-for(int i = 0; i < 48; i++){
-    printf("%c", decrypted_output[i]);
-}
+    printf("printing decrypted output: ");
+    for(int i = 0; i < 48; i++){
+        printf("%c", decrypted_output[i]);
+    }
+    printf("\n");
 
-
-
-
-// char arr[] = "hi there";
-// char out[BUF_BYTES];
-
-// mbedtls_pk_encrypt(&ctx_cli, arr, 8, out, BUF_BYTES, BUF_BYTES, rnd_std_rand, NULL);
 return pub_key_buffer;
 
                       
+}
+
+int pub_length(){
+    return pub_key_len;
 }
 int ecc_keys(){
     yet_another();
