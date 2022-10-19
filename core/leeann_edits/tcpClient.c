@@ -9,13 +9,13 @@ int tcp_client(){
 
   unsigned char* pub_key = yet_another();
     //Uncomment for testing purposes
-    // printf("Printing pub key bufffer in tcp\n");
+    printf("Printing pub key bufffer in tcp\n");
     int pub_len = pub_length();
-    // printf("len is %d\n", pub_len);
-    // for(int i = 0; i < pub_len; i++){
-    //     printf("%c", pub_key[i]);
-    // }
-    // printf("\n");
+    printf("len is %d\n", pub_len);
+    for(int i = 0; i < pub_len; i++){
+        printf("%c", pub_key[i]);
+    }
+    printf("\n");
 
   char* ip = "127.0.0.1";
   int port = 5566;
