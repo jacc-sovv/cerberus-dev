@@ -16,6 +16,7 @@
 
 
 //Print out the private and public keys
+//Yo!
 struct ecc_public_key public;
 struct ecc_private_key private;
 
