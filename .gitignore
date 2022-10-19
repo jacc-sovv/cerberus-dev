@@ -1,0 +1,16 @@
+.repo
+external
+tools/testing/output
+projects/*
+!projects/bare_metal
+!projects/freertos
+!projects/gcc
+!projects/keil
+!projects/linux
+build*
+.vscode
+*~
+*.bin
+*.pyc
+tools/manifest_visualizer/manifest_visualizor
+user_all_tests.h
