@@ -45,8 +45,9 @@ int tcp_client(){
   printf("Connected to the server.\n");
 
   bzero(buffer, 1024);
-  strcpy(buffer, "Hello, this is client.");
-  printf("Client: %s\n", buffer);
+  //strcpy(buffer, (const char*)pub_key);
+  memcpy(&buffer, pub_key, pub_len);
+  printf("Client:\n %s\n", buffer);
   send(sock, buffer, strlen(buffer), 0);
 
   bzero(buffer, 1024);
