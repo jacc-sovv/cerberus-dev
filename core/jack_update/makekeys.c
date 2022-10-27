@@ -387,7 +387,7 @@ int hexcmp( uint8_t * a, uint8_t * b, uint32_t a_len, uint32_t b_len )
 }
 
 #define BUF_BYTES 66
-#define ELLIPTIC_CURVE MBEDTLS_ECP_DP_SECP521R1
+#define ELLIPTIC_CURVE MBEDTLS_ECP_DP_SECP256R1
     // Safe to use the largest buffer size
 
 // Size of buffer used to translate mbed TLS error codes into a string representation
@@ -564,6 +564,26 @@ return pub_key_buffer;
                       
 }
 
+mbedtls_ecdh_context gen_cli_ctx(){
+    mbedtls_ecdh_context ctx_cli;
+    mbedtls_entropy_context entropy;
+    mbedtls_ctr_drbg_context ctr_drbg;
+    const char pers[] = "ecdh";
+    mbedtls_ecdh_init( &ctx_cli );
+    mbedtls_ctr_drbg_init( &ctr_drbg );
+    mbedtls_entropy_init( &entropy );
+    mbedtls_ctr_drbg_seed( &ctr_drbg, mbedtls_entropy_func, &entropy, (const unsigned char *) pers, sizeof pers );
+    mbedtls_ecp_group_load( &ctx_cli.grp,     // Destination group
+                                  ELLIPTIC_CURVE ); // Index in the list of well-known domain parameters
+
+    mbedtls_ecdh_gen_public( &ctx_cli.grp,            // ECP group
+                                &ctx_cli.d,              // Destination MPI (secret exponent, aka private key)
+                                &ctx_cli.Q,              // Destination point (public key)
+                                mbedtls_ctr_drbg_random, // RNG function
+                                &ctr_drbg );             //RNG parameter
+    return ctx_cli;
+}
+
 int pub_length(){
     return pub_key_len;
 }
@@ -572,10 +592,7 @@ int ecc_keys(){
     return 0;
 }
 
-// unsigned char * get_pub_buff(){
 
-//     return pub_key_buffer;
-// }
 
 struct ecc_public_key ecc_keys_get_pub(){
   return public;
@@ -583,4 +600,58 @@ struct ecc_public_key ecc_keys_get_pub(){
 
 struct ecc_private_key ecc_keys_get_priv(){
   return private;
+}
+
+int revamp(){
+    printf("in revamp\n");
+    struct ecc_engine_mbedtls engine;
+	struct ecc_private_key priv_key_cli, priv_key_srv;
+	struct ecc_public_key pub_key_cli, pub_key_srv;
+	int out_len, out_len2;
+
+
+    ecc_mbedtls_init (&engine);
+
+    //Uses NIST P-256
+    engine.base.generate_key_pair (&engine.base, ECC_KEY_LENGTH_256, &priv_key_cli, &pub_key_cli);
+    engine.base.generate_key_pair (&engine.base, ECC_KEY_LENGTH_256, &priv_key_srv, &pub_key_srv);
+
+    //Process - generate two keys
+    //Generate shared secret, be sure it's the same for both
+    
+    int shared1 = engine.base.get_shared_secret_max_length(&engine.base, &priv_key_cli);
+    int shared2 = engine.base.get_shared_secret_max_length(&engine.base, &priv_key_srv);
+
+	uint8_t out[shared1], out2[shared2];
+    out_len = engine.base.compute_shared_secret (&engine.base, &priv_key_cli, &pub_key_srv, out, sizeof (out));
+    out_len2 = engine.base.compute_shared_secret (&engine.base, &priv_key_srv, &pub_key_cli, out2, sizeof (out2));
+
+    //Compare the shared secrets
+    //Are the lengths the same
+    if(out_len != out_len2){
+        printf("ERROR : SHARED SECRETS ARE NOT THE SAME LENGTH");
+    }
+    for(int i = 0; i < out_len; i++){
+        if(out[i] != out2[i]){
+            printf("FALSE");
+        }
+    }
+
+    //Now, encode the key into proper format using get_public_key_der
+
+    uint8_t *pub_der = NULL;
+    size_t der_length;
+    engine.base.get_public_key_der (&engine.base, &pub_key_cli, &pub_der, &der_length);
+        printf("length of der is %d and length of pub_der is %d", der_length, sizeof(pub_der));
+    printf("DER IS %s\n\n\n\n", (const char*)pub_der);
+
+
+    for(int i = 0; i < (int)der_length; i++){
+        printf("%c", pub_der[i]);
+    }
+
+
+
+
+    return 0;
 }
