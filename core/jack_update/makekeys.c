@@ -460,7 +460,7 @@ unsigned char * yet_another(){
     //This writes our Qp into a character buffer
     size_t x_len;
     unsigned char xbuff[1000];
-    mbedtls_ecp_point_write_binary(&ctx_cli.grp, &ctx_cli.Qp, MBEDTLS_ECP_PF_COMPRESSED, &x_len, xbuff, sizeof(xbuff));
+    mbedtls_ecp_point_write_binary(&ctx_cli.grp, &ctx_cli.Qp, MBEDTLS_ECP_PF_UNCOMPRESSED, &x_len, xbuff, sizeof(xbuff));
 
     //Use this character buffer to compute a new point, check the shared secret, be sure they are same
     printf("About to print XBUFF\n");
@@ -472,7 +472,7 @@ unsigned char * yet_another(){
 
     //Also write it to global variable buffer
 
-    mbedtls_ecp_point_write_binary(&ctx_cli.grp, &ctx_cli.Qp, MBEDTLS_ECP_PF_COMPRESSED, &pub_key_len, pub_key_buffer, sizeof(pub_key_buffer));
+    mbedtls_ecp_point_write_binary(&ctx_cli.grp, &ctx_cli.Qp, MBEDTLS_ECP_PF_UNCOMPRESSED, &pub_key_len, pub_key_buffer, sizeof(pub_key_buffer));
     printf("Printing pub key bufffer\n");
     printf("len is %d", pub_key_len);
     printf("In makekeys, using strlen, pubkey is %d", strlen((const char*)pub_key_buffer));

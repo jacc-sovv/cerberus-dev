@@ -22,22 +22,31 @@ mbedtls_ecdh_context gen_serv_ctx(){
 
 int tcp_client(){
 
-  //unsigned char* pub_key = yet_another();
+  unsigned char* pub_key = yet_another();
     //Uncomment for testing purposes
     // printf("Printing pub key bufffer in tcp\n");
-    // int pub_len = pub_length();
+    int pub_len = pub_length();
     //printf("len is %d\n", pub_len);
     // for(int i = 0; i < pub_len; i++){
     //     printf("%c", pub_key[i]);
     // }
     // printf("\n");
 
-  mbedtls_ecdh_context cli_ctx = gen_cli_ctx();
+    //Write to file real quick
+    printf("length of uncompressed public key is %d", sizeof(pub_key));
+    FILE* f = fopen("keyBinary", "wb");
+    fwrite(pub_key, sizeof(unsigned char), pub_len, f);
+    fclose(f);
+  //
+
+    printf("Inside client, public key is %s\n", pub_key);
+
+  //mbedtls_ecdh_context cli_ctx = gen_cli_ctx();
   mbedtls_ecdh_context serv_ctx = gen_serv_ctx();
   ///
 
   ///
-  printf("%d", cli_ctx.Qp.X.s);
+  //printf("%d", cli_ctx.Qp.X.s);
 
 
   char* ip = "127.0.0.1";
@@ -67,10 +76,12 @@ int tcp_client(){
   }
   printf("Connected to the server.\n");
 
-  // bzero(buffer, 1024);
-  // memcpy(&buffer, pub_key, pub_len);
+  bzero(buffer, 1024);
+  memcpy(&buffer, pub_key, pub_len);
   //mbedtls_pk_write_pubkey_pem(&cli_ctx, buffer, sizeof(buffer));
   printf("Client:\n %s\n", buffer);
+  
+
   send(sock, buffer, strlen(buffer), 0);
 
   bzero(buffer, 1024);
