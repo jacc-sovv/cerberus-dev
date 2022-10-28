@@ -650,8 +650,38 @@ int revamp(){
         printf("%c", pub_der[i]);
     }
 
+    FILE *f = fopen("key.der", "wb");
+    fwrite(pub_der, sizeof(uint8_t), sizeof(pub_der), f);
+    fclose(f);
 
+
+    //Doing it into PEM format
+    unsigned char pem[5000];
+    size_t pem_size = 5000;
+    mbedtls_pk_write_pubkey_pem( pub_key_cli.context, pem, pem_size );
+    printf("pem_size is %d\n", pem_size);
+    printf("but, pem is %s\n", pem);
+
+    f = fopen("key.pem", "wb");
+    fwrite(pem, sizeof(unsigned char), sizeof(pem), f);
+    fclose(f);
 
 
     return 0;
 }
+
+// int pem_format(){
+
+//     struct ecc_engine_mbedtls engine;
+// 	struct ecc_private_key priv_key_cli, priv_key_srv;
+// 	struct ecc_public_key pub_key_cli, pub_key_srv;
+// 	int out_len, out_len2;
+
+
+//     ecc_mbedtls_init (&engine);
+    
+//     //int mbedtls_pk_write_pubkey_pem( mbedtls_pk_context *ctx, unsigned char *buf, size_t size );
+    
+
+//     return 0;
+// }

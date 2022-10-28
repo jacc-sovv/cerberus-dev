@@ -22,22 +22,22 @@ mbedtls_ecdh_context gen_serv_ctx(){
 
 int tcp_client(){
 
-  // unsigned char* pub_key = yet_another();
-  //   //Uncomment for testing purposes
-  //   printf("Printing pub key bufffer in tcp\n");
-  //   int pub_len = pub_length();
-  //   //printf("len is %d\n", pub_len);
-  //   // for(int i = 0; i < pub_len; i++){
-  //   //     printf("%c", pub_key[i]);
-  //   // }
-  //   // printf("\n");
+  //unsigned char* pub_key = yet_another();
+    //Uncomment for testing purposes
+    // printf("Printing pub key bufffer in tcp\n");
+    // int pub_len = pub_length();
+    //printf("len is %d\n", pub_len);
+    // for(int i = 0; i < pub_len; i++){
+    //     printf("%c", pub_key[i]);
+    // }
+    // printf("\n");
 
-  // mbedtls_ecdh_context cli_ctx = gen_cli_ctx();
-  // mbedtls_ecdh_context serv_ctx = gen_serv_ctx();
-  // ///
+  mbedtls_ecdh_context cli_ctx = gen_cli_ctx();
+  mbedtls_ecdh_context serv_ctx = gen_serv_ctx();
+  ///
 
-  // ///
-  // printf("%d", cli_ctx.Qp.X.s);
+  ///
+  printf("%d", cli_ctx.Qp.X.s);
 
 
   char* ip = "127.0.0.1";
@@ -67,8 +67,9 @@ int tcp_client(){
   }
   printf("Connected to the server.\n");
 
-  bzero(buffer, 1024);
+  // bzero(buffer, 1024);
   // memcpy(&buffer, pub_key, pub_len);
+  //mbedtls_pk_write_pubkey_pem(&cli_ctx, buffer, sizeof(buffer));
   printf("Client:\n %s\n", buffer);
   send(sock, buffer, strlen(buffer), 0);
 
@@ -89,22 +90,20 @@ int tcp_client(){
     printf("Count is %d\n", count);
 
 
-  // mbedtls_ecp_point_read_binary(&serv_ctx.grp, &serv_ctx.Qp, buf2, strlen(buffer));
+  mbedtls_ecp_point_read_binary(&serv_ctx.grp, &serv_ctx.Qp, buf2, strlen(buffer));
 
-  // size_t keylen;
-  // unsigned char keybuff[1000];
-  // //mbedtls_ecp_point_write_binary(&serv_ctx.grp, &serv_ctx.Qp, MBEDTLS_ECP_PF_COMPRESSED, &keylen, keybuff, sizeof(keybuff));
-  // printf("About to print keybuff w/ len of %d\n", keylen);
-  // for(int i = 0; i < (int)keylen; i++){
-  //   printf("%c", keybuff[i]);
-  // }
-  // printf("\n");
+  size_t keylen;
+  unsigned char keybuff[1000];
+  mbedtls_ecp_point_write_binary(&serv_ctx.grp, &serv_ctx.Qp, MBEDTLS_ECP_PF_COMPRESSED, &keylen, keybuff, sizeof(keybuff));
+  printf("About to print keybuff w/ len of %d\n", keylen);
+  for(int i = 0; i < (int)keylen; i++){
+    printf("%c", keybuff[i]);
+  }
+  printf("\n");
 
   //At this point, serv.ctx.Qp should be initialized to the server's public key!
   //Last step, compute shared secret.
 
-  // mbedtls_ecdh_compute_shared( &ctx_cli.grp, &ctx_cli.z, &ctx_cli.Qp, &ctx_cli.d,
-  //                                       mbedtls_ctr_drbg_random, &ctr_drbg );
 
   close(sock);
   printf("Disconnected from the server.\n");
