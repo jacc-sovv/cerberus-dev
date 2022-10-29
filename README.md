@@ -1,3 +1,22 @@
+
+How to run my version:
+
+```bash
+mkdir Project-Cerberus
+cd Project-Cerberus
+~/.local/bin/repo init -u https://github.com/jacc-sovv/cerberus-dev-manifest -b master
+~/.local/bin/repo sync
+cd cerberus
+rm -rf build
+mkdir build
+cd build
+cmake -G Ninja ../projects/linux/testing/
+ninja
+./cerberus-linux-unit-tests
+```
+
+
+
 # Project Cerberus
 
 Project Cerberus is designed to be a hardware root of trust (RoT) for server platforms.  It provides functionality 
