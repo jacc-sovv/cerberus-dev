@@ -1,0 +1,6 @@
+ecc_mbedtls.c contains a function to initialize a key-pair, called ecc_mbedtls_init_key_pair.
+One we have a keypair of mbedtls_pk_context, there's a function in pk.h called pk_write_pubkey_pem which takes a pk_context and writes it to a buffer. PEM is a pretty universal format AND is already in string form. I think almost any python library can handle this.
+
+Also, ecdsa.c in external/programs/pubkey looks like it might generate some keys!
+
+Also, pkwrite.c has a method to write a eky to der format!

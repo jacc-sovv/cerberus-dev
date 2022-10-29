@@ -387,7 +387,7 @@ int hexcmp( uint8_t * a, uint8_t * b, uint32_t a_len, uint32_t b_len )
 }
 
 #define BUF_BYTES 66
-#define ELLIPTIC_CURVE MBEDTLS_ECP_DP_SECP521R1
+#define ELLIPTIC_CURVE MBEDTLS_ECP_DP_SECP256R1
     // Safe to use the largest buffer size
 
 // Size of buffer used to translate mbed TLS error codes into a string representation
@@ -460,7 +460,7 @@ unsigned char * yet_another(){
     //This writes our Qp into a character buffer
     size_t x_len;
     unsigned char xbuff[1000];
-    mbedtls_ecp_point_write_binary(&ctx_cli.grp, &ctx_cli.Qp, MBEDTLS_ECP_PF_COMPRESSED, &x_len, xbuff, sizeof(xbuff));
+    mbedtls_ecp_point_write_binary(&ctx_cli.grp, &ctx_cli.Qp, MBEDTLS_ECP_PF_UNCOMPRESSED, &x_len, xbuff, sizeof(xbuff));
 
     //Use this character buffer to compute a new point, check the shared secret, be sure they are same
     printf("About to print XBUFF\n");
@@ -472,7 +472,7 @@ unsigned char * yet_another(){
 
     //Also write it to global variable buffer
 
-    mbedtls_ecp_point_write_binary(&ctx_cli.grp, &ctx_cli.Qp, MBEDTLS_ECP_PF_COMPRESSED, &pub_key_len, pub_key_buffer, sizeof(pub_key_buffer));
+    mbedtls_ecp_point_write_binary(&ctx_cli.grp, &ctx_cli.Qp, MBEDTLS_ECP_PF_UNCOMPRESSED, &pub_key_len, pub_key_buffer, sizeof(pub_key_buffer));
     printf("Printing pub key bufffer\n");
     printf("len is %d", pub_key_len);
     printf("In makekeys, using strlen, pubkey is %d", strlen((const char*)pub_key_buffer));
@@ -564,6 +564,26 @@ return pub_key_buffer;
                       
 }
 
+mbedtls_ecdh_context gen_cli_ctx(){
+    mbedtls_ecdh_context ctx_cli;
+    mbedtls_entropy_context entropy;
+    mbedtls_ctr_drbg_context ctr_drbg;
+    const char pers[] = "ecdh";
+    mbedtls_ecdh_init( &ctx_cli );
+    mbedtls_ctr_drbg_init( &ctr_drbg );
+    mbedtls_entropy_init( &entropy );
+    mbedtls_ctr_drbg_seed( &ctr_drbg, mbedtls_entropy_func, &entropy, (const unsigned char *) pers, sizeof pers );
+    mbedtls_ecp_group_load( &ctx_cli.grp,     // Destination group
+                                  ELLIPTIC_CURVE ); // Index in the list of well-known domain parameters
+
+    mbedtls_ecdh_gen_public( &ctx_cli.grp,            // ECP group
+                                &ctx_cli.d,              // Destination MPI (secret exponent, aka private key)
+                                &ctx_cli.Q,              // Destination point (public key)
+                                mbedtls_ctr_drbg_random, // RNG function
+                                &ctr_drbg );             //RNG parameter
+    return ctx_cli;
+}
+
 int pub_length(){
     return pub_key_len;
 }
@@ -572,15 +592,44 @@ int ecc_keys(){
     return 0;
 }
 
-// unsigned char * get_pub_buff(){
 
-//     return pub_key_buffer;
-// }
 
 struct ecc_public_key ecc_keys_get_pub(){
   return public;
 }
-
+//Returns the private key used to generate shared secret for server
 struct ecc_private_key ecc_keys_get_priv(){
   return private;
 }
+
+//Returns public key in der format
+uint8_t * create_key_as_der(){
+    printf("in revamp\n");
+    struct ecc_engine_mbedtls engine;
+	struct ecc_private_key priv_key_cli, priv_key_srv;
+	struct ecc_public_key pub_key_cli, pub_key_srv;
+
+
+    ecc_mbedtls_init (&engine);
+
+    //Uses NIST P-256, generate key-pair for client
+    int status = engine.base.generate_key_pair (&engine.base, ECC_KEY_LENGTH_256, &priv_key_cli, &pub_key_cli);
+    private = priv_key_cli;
+
+    printf("Was keypair generation successfull? %d\n", status);
+    
+    //Now, encode the key into proper format using get_public_key_der
+
+    uint8_t *pub_der = NULL;
+    size_t der_length;
+    int success = engine.base.get_public_key_der (&engine.base, &pub_key_cli, &pub_der, &der_length);
+        printf("length of der is %d and length of pub_der is %d\n", der_length, sizeof(pub_der));
+        printf("Was writing into der format successfull? 0 indicates success : %d\n", success);
+        
+    printf("DER IS %s\n\n\n\n", (const char*)pub_der);
+    printf("Expected DER is %s\n\n", ECC_PUBKEY_DER);
+    printf("Length of our der is %d, length of expected der is %d\n", der_length, ECC_PUBKEY_DER_LEN);
+
+    return pub_der;
+}
+
