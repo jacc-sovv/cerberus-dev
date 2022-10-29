@@ -597,91 +597,39 @@ int ecc_keys(){
 struct ecc_public_key ecc_keys_get_pub(){
   return public;
 }
-
+//Returns the private key used to generate shared secret for server
 struct ecc_private_key ecc_keys_get_priv(){
   return private;
 }
 
-int revamp(){
+//Returns public key in der format
+uint8_t * create_key_as_der(){
     printf("in revamp\n");
     struct ecc_engine_mbedtls engine;
 	struct ecc_private_key priv_key_cli, priv_key_srv;
 	struct ecc_public_key pub_key_cli, pub_key_srv;
-	int out_len, out_len2;
 
 
     ecc_mbedtls_init (&engine);
 
-    //Uses NIST P-256
-    engine.base.generate_key_pair (&engine.base, ECC_KEY_LENGTH_256, &priv_key_cli, &pub_key_cli);
-    engine.base.generate_key_pair (&engine.base, ECC_KEY_LENGTH_256, &priv_key_srv, &pub_key_srv);
+    //Uses NIST P-256, generate key-pair for client
+    int status = engine.base.generate_key_pair (&engine.base, ECC_KEY_LENGTH_256, &priv_key_cli, &pub_key_cli);
+    private = priv_key_cli;
 
-    //Process - generate two keys
-    //Generate shared secret, be sure it's the same for both
+    printf("Was keypair generation successfull? %d\n", status);
     
-    int shared1 = engine.base.get_shared_secret_max_length(&engine.base, &priv_key_cli);
-    int shared2 = engine.base.get_shared_secret_max_length(&engine.base, &priv_key_srv);
-
-	uint8_t out[shared1], out2[shared2];
-    out_len = engine.base.compute_shared_secret (&engine.base, &priv_key_cli, &pub_key_srv, out, sizeof (out));
-    out_len2 = engine.base.compute_shared_secret (&engine.base, &priv_key_srv, &pub_key_cli, out2, sizeof (out2));
-
-    //Compare the shared secrets
-    //Are the lengths the same
-    if(out_len != out_len2){
-        printf("ERROR : SHARED SECRETS ARE NOT THE SAME LENGTH");
-    }
-    for(int i = 0; i < out_len; i++){
-        if(out[i] != out2[i]){
-            printf("FALSE");
-        }
-    }
-
     //Now, encode the key into proper format using get_public_key_der
 
     uint8_t *pub_der = NULL;
     size_t der_length;
-    engine.base.get_public_key_der (&engine.base, &pub_key_cli, &pub_der, &der_length);
-        printf("length of der is %d and length of pub_der is %d", der_length, sizeof(pub_der));
+    int success = engine.base.get_public_key_der (&engine.base, &pub_key_cli, &pub_der, &der_length);
+        printf("length of der is %d and length of pub_der is %d\n", der_length, sizeof(pub_der));
+        printf("Was writing into der format successfull? 0 indicates success : %d\n", success);
+        
     printf("DER IS %s\n\n\n\n", (const char*)pub_der);
+    printf("Expected DER is %s\n\n", ECC_PUBKEY_DER);
+    printf("Length of our der is %d, length of expected der is %d\n", der_length, ECC_PUBKEY_DER_LEN);
 
-
-    for(int i = 0; i < (int)der_length; i++){
-        printf("%c", pub_der[i]);
-    }
-
-    FILE *f = fopen("key.der", "wb");
-    fwrite(pub_der, sizeof(uint8_t), sizeof(pub_der), f);
-    fclose(f);
-
-
-    //Doing it into PEM format
-    unsigned char pem[5000];
-    size_t pem_size = 5000;
-    mbedtls_pk_write_pubkey_pem( pub_key_cli.context, pem, pem_size );
-    printf("pem_size is %d\n", pem_size);
-    printf("but, pem is %s\n", pem);
-
-    f = fopen("key.pem", "wb");
-    fwrite(pem, sizeof(unsigned char), sizeof(pem), f);
-    fclose(f);
-
-
-    return 0;
+    return pub_der;
 }
 
-// int pem_format(){
-
-//     struct ecc_engine_mbedtls engine;
-// 	struct ecc_private_key priv_key_cli, priv_key_srv;
-// 	struct ecc_public_key pub_key_cli, pub_key_srv;
-// 	int out_len, out_len2;
-
-
-//     ecc_mbedtls_init (&engine);
-    
-//     //int mbedtls_pk_write_pubkey_pem( mbedtls_pk_context *ctx, unsigned char *buf, size_t size );
-    
-
-//     return 0;
-// }

@@ -14,5 +14,5 @@ int pub_length();
 mbedtls_ecdh_context gen_cli_ctx();
 struct ecc_public_key ecc_keys_get_pub();
 struct ecc_private_key ecc_keys_get_priv();
-int revamp();
+uint8_t * create_key_as_der();
 // unsigned char * get_pub_buff();

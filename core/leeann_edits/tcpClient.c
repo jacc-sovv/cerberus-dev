@@ -5,6 +5,7 @@
 #include <arpa/inet.h>
 #include "jack_update/makekeys.h"
 #define ELLIPTIC_CURVE MBEDTLS_ECP_DP_SECP256R1
+#define DER_LEN 91
 
 mbedtls_ecdh_context gen_serv_ctx(){
     mbedtls_ecdh_context ctx_srv;
@@ -22,40 +23,15 @@ mbedtls_ecdh_context gen_serv_ctx(){
 
 int tcp_client(){
 
-  unsigned char* pub_key = yet_another();
-    //Uncomment for testing purposes
-    // printf("Printing pub key bufffer in tcp\n");
-    int pub_len = pub_length();
-    //printf("len is %d\n", pub_len);
-    // for(int i = 0; i < pub_len; i++){
-    //     printf("%c", pub_key[i]);
-    // }
-    // printf("\n");
-
-    //Write to file real quick
-    printf("length of uncompressed public key is %d", sizeof(pub_key));
-    FILE* f = fopen("keyBinary", "wb");
-    fwrite(pub_key, sizeof(unsigned char), pub_len, f);
-    fclose(f);
-  //
-
-    printf("Inside client, public key is %s\n", pub_key);
-
-  //mbedtls_ecdh_context cli_ctx = gen_cli_ctx();
-  mbedtls_ecdh_context serv_ctx = gen_serv_ctx();
-  ///
-
-  ///
-  //printf("%d", cli_ctx.Qp.X.s);
-
+  //Public key to send to the server, encoded in DER format
+  uint8_t* pub_key_der = create_key_as_der();
 
   char* ip = "127.0.0.1";
   int port = 5566;
 
   int sock;
   struct sockaddr_in addr;
-  //socklen_t addr_size;
-  char buffer[1024];
+
 
   sock = socket(AF_INET, SOCK_STREAM, 0);
   if (sock < 0){
@@ -76,44 +52,36 @@ int tcp_client(){
   }
   printf("Connected to the server.\n");
 
-  bzero(buffer, 1024);
-  memcpy(&buffer, pub_key, pub_len);
-  //mbedtls_pk_write_pubkey_pem(&cli_ctx, buffer, sizeof(buffer));
-  printf("Client:\n %s\n", buffer);
+  printf("Client:\n %s\n", pub_key_der);
   
 
-  send(sock, buffer, strlen(buffer), 0);
+  send(sock, pub_key_der, DER_LEN, 0); //Will always be length 91 for this curve
 
-  bzero(buffer, 1024);
-  recv(sock, buffer, sizeof(buffer), 0);
-  //printf("Server: %s\n", buffer);
+  uint8_t buffer[DER_LEN];
+  bzero(buffer, DER_LEN);
+  recv(sock, buffer, DER_LEN, 0);
 
-  //Now, buffer has the server's message (should be the public key)
-  const unsigned char* buf2 = (const unsigned char*) buffer;
-  printf("BUFFER FOR LOOP\n");
-  int count = 0;
-  for(int i = 0; i < (int)strlen(buffer); i++){
-    printf("%c", buf2[i]);
-    count = i;
-  }
+  //At this point, buffer should be der encoded server public key
 
-  printf("%d\n", strlen(buffer));
-    printf("Count is %d\n", count);
+  struct ecc_engine_mbedtls engine;
+  struct ecc_public_key serv_pub_key;
+  struct ecc_private_key cli_priv_key = ecc_keys_get_priv();
+  ecc_mbedtls_init (&engine);
+
+  //Initialize a public key that we can use inside of cerberus from the server's DER encoded public key
+  engine.base.init_public_key(&engine.base, buffer, DER_LEN, &serv_pub_key);
 
 
-  mbedtls_ecp_point_read_binary(&serv_ctx.grp, &serv_ctx.Qp, buf2, strlen(buffer));
 
-  size_t keylen;
-  unsigned char keybuff[1000];
-  mbedtls_ecp_point_write_binary(&serv_ctx.grp, &serv_ctx.Qp, MBEDTLS_ECP_PF_COMPRESSED, &keylen, keybuff, sizeof(keybuff));
-  printf("About to print keybuff w/ len of %d\n", keylen);
-  for(int i = 0; i < (int)keylen; i++){
-    printf("%c", keybuff[i]);
-  }
-  printf("\n");
+  //Compute shared secret
+  int shared_length = engine.base.get_shared_secret_max_length(&engine.base, &cli_priv_key);
+  uint8_t out[shared_length];
+  int out_len = engine.base.compute_shared_secret (&engine.base, &cli_priv_key, &serv_pub_key, out, sizeof (out));
 
-  //At this point, serv.ctx.Qp should be initialized to the server's public key!
-  //Last step, compute shared secret.
+
+  //Sends the shared secret to the server (mainly for testing purposes to be sure they are the same)
+  send(sock, out, out_len, 0);
+
 
 
   close(sock);

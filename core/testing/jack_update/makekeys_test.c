@@ -33,16 +33,16 @@ static void test_get_priv(CuTest *test){
     CuAssertPtrNotNull (test, mypriv.context);
 }
 
-static void test_revamp(CuTest *test){
-    TEST_START;
-    int status = revamp();
-    printf("%d", status);
-}
+// static void test_revamp(CuTest *test){
+//     TEST_START;
+//     int status = revamp();
+//     printf("%d", status);
+// }
 
 
 TEST_SUITE_START (makekeys);
 TEST (test_makekeys);
 TEST (test_get_pub);
 TEST (test_get_priv);
-TEST (test_revamp);
+// TEST (test_revamp);
 TEST_SUITE_END;
