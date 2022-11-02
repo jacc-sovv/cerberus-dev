@@ -606,8 +606,8 @@ struct ecc_private_key ecc_keys_get_priv(){
 uint8_t * create_key_as_der(){
     printf("in revamp\n");
     struct ecc_engine_mbedtls engine;
-	struct ecc_private_key priv_key_cli, priv_key_srv;
-	struct ecc_public_key pub_key_cli, pub_key_srv;
+	struct ecc_private_key priv_key_cli;
+	struct ecc_public_key pub_key_cli;
 
 
     ecc_mbedtls_init (&engine);
