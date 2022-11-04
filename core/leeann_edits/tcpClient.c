@@ -39,6 +39,11 @@ int tcp_client(){
 
   //Public key to send to the server, encoded in DER format
   uint8_t* pub_key_der = create_key_as_der();
+    printf("Client's public key : %s\n", pub_key_der);
+    for(int i = 0; i < (int)sizeof(pub_key_der); i++){
+    printf("%d", pub_key_der[i]);
+  }
+  printf("\n");
 
   char* ip = "127.0.0.1";
   int port = 5577;
@@ -66,7 +71,6 @@ int tcp_client(){
   }
   printf("Connected to the server.\n");
 
-  printf("Client:\n %s\n", pub_key_der);
   
 
   send(sock, pub_key_der, DER_LEN, 0); //Will always be length 91 for this curve
@@ -75,7 +79,6 @@ int tcp_client(){
   bzero(buffer, DER_LEN);
   recv(sock, buffer, DER_LEN, 0);
 
-    printf("Buffer on client is : %s\n", buffer);
 
   //At this point, buffer should be der encoded server public key
 
@@ -85,6 +88,11 @@ int tcp_client(){
   ecc_mbedtls_init (&engine);
 
   //Initialize a public key that we can use inside of cerberus from the server's DER encoded public key
+  for(int i = 0; i < (int)sizeof(pub_key_der); i++){
+    if(pub_key_der[i] == buffer[i]){
+      printf("Same???\n");
+    }
+  }
   engine.base.init_public_key(&engine.base, buffer, DER_LEN, &serv_pub_key);
 
 
@@ -95,8 +103,10 @@ int tcp_client(){
   uint8_t out[shared_length];
     printf("Success in initializing my own public key\n");
   int out_len = engine.base.compute_shared_secret (&engine.base, &cli_priv_key, &serv_pub_key, out, sizeof (out));
-
-
+  printf("Client's generated shared secret is \n", out);
+  for(int i = 0; i < out_len; i++){
+    printf("%d", out[i]);
+  }
   //Sends the shared secret to the server (mainly for testing purposes to be sure they are the same)
   send(sock, out, out_len, 0);
 
@@ -115,58 +125,28 @@ int tcp_client(){
   aes_mbedtls_init (&aes_engine);
   int msg_length = 128;
 
-  //Works w/ size of 121
-  printf("\n");
-  //Ending my new stuff
-  // const uint8_t AES_IV[] = {
-	// 0x20,0x21,0x22,0x23,0x24,0x25,0x26,0x27,0x28,0x29,0x2a,0x2b
-  // };
 
-  printf("\n Original IV is %s\n", AES_IV);
-  uint8_t my_plaintext[128] = "hi there";
+
+  uint8_t my_plaintext[128] = "temporary production ID (client)";
 
   uint8_t decrypted_plaintext[msg_length];
-  printf("aes_lenght is %d\n", msg_length);
   uint8_t ciphertext_test[msg_length];
 	uint8_t tag_test[AES_GCM_TAG_LEN * 2];
-  printf("Before test file encryption: %s with size %d\n", my_plaintext, sizeof(my_plaintext));
+
   aes_engine.base.set_key (&aes_engine.base, out, out_len);
   aes_engine.base.encrypt_data (&aes_engine.base, my_plaintext, sizeof(my_plaintext), AES_IV,
 		AES_IV_LEN, ciphertext_test, sizeof (ciphertext_test), tag_test, sizeof (tag_test));
 
-     printf("\n AFter encrypting IV is %s\n", AES_IV);
 
-  //Are the ciphers the same?
-  printf("My ciphertext is %s with size %d\n", ciphertext_test, sizeof(ciphertext_test));
 
-  aes_engine.base.decrypt_data (&aes_engine.base, ciphertext_test, sizeof(ciphertext_test),
-		tag_test, AES_IV, AES_IV_LEN, decrypted_plaintext, sizeof (decrypted_plaintext));
-  //Verified with testing that decrypted_plaintext and initial plaintext are the same.
-  printf("After test file decryption: %s. Are they the same??\n", decrypted_plaintext);
-
-  for(int i = 0; i < (int)sizeof(decrypted_plaintext); i++){
-    if(decrypted_plaintext[i] != my_plaintext[i]){
-      printf("ERROR - NOT THE SAME AT INDEX %d\n", i);
-    }
-  }
-
-  printf("Size of ciphertext is %d, AES is %d, and tag is %d\n", sizeof(ciphertext_test), AES_IV_LEN, sizeof(tag_test));
-  printf("Sending ciphertext that looks like %s\n", ciphertext_test);
-  printf("Sending aes_iv of %s\n", AES_IV);
-  printf("Sending tag of %s\n", tag_test);
-  printf("Double checking encrypted message, %s\n", ciphertext_test);
+  printf("Sending server my message : %s\n", my_plaintext);
   send(sock, ciphertext_test, sizeof(ciphertext_test), 0);
   send(sock, AES_IV, AES_IV_LEN, 0);
   send(sock, tag_test, sizeof(tag_test), 0);
   send(sock, my_plaintext, sizeof(my_plaintext), 0);  //Send the OG msg
 
 
-  //Can I even decrypt it on my end?
-  uint8_t local_decrypt[msg_length];
-  aes_engine.base.decrypt_data(&aes_engine.base, ciphertext_test, sizeof(ciphertext_test), tag_test, AES_IV, AES_IV_LEN,
-                        local_decrypt, sizeof(local_decrypt));
-
-  printf("Local decryption yiels %s\n", local_decrypt);
+  //Receive the server's encrypted message
   uint8_t serv_enc[msg_length];
   uint8_t server_tag[AES_GCM_TAG_LEN * 2];
   bzero(serv_enc, msg_length);
@@ -177,15 +157,33 @@ int tcp_client(){
 
 //Is the server's encryption the same as mine?
   //Can I decrypt the server's message?
-  printf("Server msg is %s\n", serv_enc);
+  printf("Encrypted server message : %s\n\n", serv_enc);
   bzero(decrypted_plaintext, sizeof(decrypted_plaintext));
     aes_engine.base.decrypt_data (&aes_engine.base, serv_enc, sizeof(serv_enc),
 		server_tag, AES_IV, AES_IV_LEN, decrypted_plaintext, sizeof (decrypted_plaintext));
 
-  printf("After decrypting, the server's message is %s\n", decrypted_plaintext);
+  printf("Decrypted server message :  %s\n\n", decrypted_plaintext);
 
   //It works!
-  
+
+  //What happens when I have a different shared secret then you?
+  struct aes_engine_mbedtls aes_engine_bad;	
+  aes_mbedtls_init (&aes_engine_bad);
+
+  const uint8_t ECC_DH_SECRET_WRONG[] = {
+	0x90,0xe8,0xe4,0xc1,0x88,0x92,0x78,0x18,0x15,0x19,0x39,0xb2,0xde,0x44,0x28,0xa5,
+	0x87,0xad,0xf4,0x70,0x62,0x8e,0x6d,0xaa,0x05,0x73,0x9b,0x99,0x4a,0x32,0x52,0x26
+  };
+
+  aes_engine_bad.base.set_key(&aes_engine_bad.base, ECC_DH_SECRET_WRONG, sizeof(ECC_DH_SECRET_WRONG));
+
+  uint8_t wrong_server_decryption[msg_length];
+  int status = aes_engine_bad.base.decrypt_data(&aes_engine_bad.base, serv_enc, sizeof(serv_enc), server_tag, AES_IV, AES_IV_LEN,
+                                  wrong_server_decryption, sizeof(wrong_server_decryption));
+
+
+  printf("Using an incorrect key, the decrypted server message is : %s\n", wrong_server_decryption);
+  printf("Error code : %d, corresponding to 'The decrypted plaintext failed authentication.'\n", status);
   close(sock);
   printf("Disconnected from the server.\n");
   exit(20);
