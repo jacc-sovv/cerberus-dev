@@ -1,3 +1,4 @@
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -6,44 +7,17 @@
 #include "jack_update/makekeys.h"
 #include "crypto/aes_mbedtls.h"
 #include "testing/crypto/aes_testing.h"
+#include "testing/crypto/base64_testing.h"
+#include "crypto/base64.h"
+#include "crypto/base64_mbedtls.h"
 #define ELLIPTIC_CURVE MBEDTLS_ECP_DP_SECP256R1
 #define DER_LEN 91
 
-mbedtls_ecdh_context gen_serv_ctx(){
-    mbedtls_ecdh_context ctx_srv;
-    mbedtls_entropy_context entropy;
-    mbedtls_ctr_drbg_context ctr_drbg;
-    const char pers[] = "ecdh";
-    mbedtls_ecdh_init( &ctx_srv );
-    mbedtls_ctr_drbg_init( &ctr_drbg );
-    mbedtls_entropy_init( &entropy );
-    mbedtls_ctr_drbg_seed( &ctr_drbg, mbedtls_entropy_func, &entropy, (const unsigned char *) pers, sizeof pers );
-    mbedtls_ecp_group_load( &ctx_srv.grp,     // Destination group
-                                  ELLIPTIC_CURVE ); // Index in the list of well-known domain parameters
-    return ctx_srv;
-}
-
-
-// uint8_t encrypt_msg(const uint8_t plaintext){
-//   struct aes_engine_mbedtls engine;
-// 	int status;
-// 	uint8_t ciphertext[1024];   //How long should this be? Same as size of plaintext I think
-// 	uint8_t tag[32];
-
-
-// 	status = aes_mbedtls_init (&engine);
-//   status = engine.base.set_key (&engine.base, AES_KEY, AES_KEY_LEN);
-// }
 
 int tcp_client(){
 
   //Public key to send to the server, encoded in DER format
   uint8_t* pub_key_der = create_key_as_der();
-    printf("Client's public key : %s\n", pub_key_der);
-    for(int i = 0; i < (int)sizeof(pub_key_der); i++){
-    printf("%d", pub_key_der[i]);
-  }
-  printf("\n");
 
   char* ip = "127.0.0.1";
   int port = 5577;
@@ -88,11 +62,6 @@ int tcp_client(){
   ecc_mbedtls_init (&engine);
 
   //Initialize a public key that we can use inside of cerberus from the server's DER encoded public key
-  for(int i = 0; i < (int)sizeof(pub_key_der); i++){
-    if(pub_key_der[i] == buffer[i]){
-      printf("Same???\n");
-    }
-  }
   engine.base.init_public_key(&engine.base, buffer, DER_LEN, &serv_pub_key);
 
 
@@ -101,12 +70,16 @@ int tcp_client(){
   //Compute shared secret
   int shared_length = engine.base.get_shared_secret_max_length(&engine.base, &cli_priv_key);
   uint8_t out[shared_length];
-    printf("Success in initializing my own public key\n");
   int out_len = engine.base.compute_shared_secret (&engine.base, &cli_priv_key, &serv_pub_key, out, sizeof (out));
-  printf("Client's generated shared secret is \n", out);
+  printf("Client's generated shared secret is\n");
   for(int i = 0; i < out_len; i++){
     printf("%d", out[i]);
   }
+  printf("\n");
+  fflush(NULL);
+  
+
+
   //Sends the shared secret to the server (mainly for testing purposes to be sure they are the same)
   send(sock, out, out_len, 0);
 
@@ -114,20 +87,13 @@ int tcp_client(){
 
   //Encrypt a message to send
 
-  
-  //Ripped from testing file:
-  //uint8_t plaintext_test[AES_PLAINTEXT_LEN * 2];
-
-  //Starting my new stuff, AES_PLAINTEXT_LEN is 121
-  // char *plain2 = "yt works llllll";
-  // uint8_t* message2 = (uint8_t*) plain2;
   struct aes_engine_mbedtls aes_engine;	
   aes_mbedtls_init (&aes_engine);
   int msg_length = 128;
 
 
 
-  uint8_t my_plaintext[128] = "temporary production ID (client)";
+  uint8_t my_plaintext[128] = "hello from client";
 
   uint8_t decrypted_plaintext[msg_length];
   uint8_t ciphertext_test[msg_length];
@@ -157,12 +123,15 @@ int tcp_client(){
 
 //Is the server's encryption the same as mine?
   //Can I decrypt the server's message?
+
   printf("Encrypted server message : %s\n\n", serv_enc);
+    fflush(stdout);
   bzero(decrypted_plaintext, sizeof(decrypted_plaintext));
     aes_engine.base.decrypt_data (&aes_engine.base, serv_enc, sizeof(serv_enc),
 		server_tag, AES_IV, AES_IV_LEN, decrypted_plaintext, sizeof (decrypted_plaintext));
 
   printf("Decrypted server message :  %s\n\n", decrypted_plaintext);
+    fflush(stdout);
 
   //It works!
 
