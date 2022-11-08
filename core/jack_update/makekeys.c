@@ -463,23 +463,11 @@ unsigned char * yet_another(){
     mbedtls_ecp_point_write_binary(&ctx_cli.grp, &ctx_cli.Qp, MBEDTLS_ECP_PF_UNCOMPRESSED, &x_len, xbuff, sizeof(xbuff));
 
     //Use this character buffer to compute a new point, check the shared secret, be sure they are same
-    printf("About to print XBUFF\n");
-    printf("len is %d", x_len);
-    for(int i = 0; i < (int)x_len; i++){
-        printf("%c", xbuff[i]);
-    }
-    printf("\n");
-
     //Also write it to global variable buffer
 
     mbedtls_ecp_point_write_binary(&ctx_cli.grp, &ctx_cli.Qp, MBEDTLS_ECP_PF_UNCOMPRESSED, &pub_key_len, pub_key_buffer, sizeof(pub_key_buffer));
-    printf("Printing pub key bufffer\n");
-    printf("len is %d", pub_key_len);
-    printf("In makekeys, using strlen, pubkey is %d", strlen((const char*)pub_key_buffer));
-    for(int i = 0; i < (int)pub_key_len; i++){
-        printf("%c", pub_key_buffer[i]);
-    }
-    printf("\n");
+
+
 
 
 
@@ -508,11 +496,7 @@ unsigned char * yet_another(){
     //Need to perform symmetric encryption with this shared key
     int same = mbedtls_mpi_cmp_mpi( &ctx_cli.z, &ctx_srv.z );
     printf("Is the shared secret the same (0)? %d\n", same);
-    printf("Shared secret is \n");
-    for(int i = 0; i < (int)len; i++){
-        printf("%c", strz[i]);
-    }
-    printf("\n");
+
 
 
     //AES Key generation part:
@@ -531,18 +515,7 @@ unsigned char * yet_another(){
     mbedtls_aes_setkey_enc(&aes_ctx, key, 256);
     mbedtls_aes_crypt_cbc(&aes_ctx, MBEDTLS_AES_ENCRYPT, 48, iv1, input, output);
 
-    printf("\n");
-    printf("printing input: ");
-    for(int i = 0; i < 40; i++){
-        printf("%c", input[i]);
-    }
-    printf("\n\n");
-    printf("\n");
-    printf("printing output: ");
-    for(int i = 0; i < 48; i++){
-        printf("%c", output[i]);
-    }
-    printf("\n\n\n");
+    
 
     //In summary, this creates a shared key using ecdh, uses that key to create an AES key, and encrypts
     //this chunk of test. The encryption is not base64 encoded. 
@@ -553,13 +526,7 @@ unsigned char * yet_another(){
     mbedtls_aes_setkey_dec( &aes_ctx, key, 256 );
     mbedtls_aes_crypt_cbc(&aes_ctx, MBEDTLS_AES_DECRYPT, 48, iv2, output, decrypted_output);
 
-    printf("printing decrypted output: ");
-    for(int i = 0; i < 48; i++){
-        printf("%c", decrypted_output[i]);
-    }
-    printf("\n");
-
-return pub_key_buffer;
+    return pub_key_buffer;
 
                       
 }
@@ -604,10 +571,10 @@ struct ecc_private_key ecc_keys_get_priv(){
 
 //Returns public key in der format
 uint8_t * create_key_as_der(){
-    printf("in revamp\n");
+   
     struct ecc_engine_mbedtls engine;
-	struct ecc_private_key priv_key_cli, priv_key_srv;
-	struct ecc_public_key pub_key_cli, pub_key_srv;
+	struct ecc_private_key priv_key_cli;
+	struct ecc_public_key pub_key_cli;
 
 
     ecc_mbedtls_init (&engine);
@@ -623,12 +590,7 @@ uint8_t * create_key_as_der(){
     uint8_t *pub_der = NULL;
     size_t der_length;
     int success = engine.base.get_public_key_der (&engine.base, &pub_key_cli, &pub_der, &der_length);
-        printf("length of der is %d and length of pub_der is %d\n", der_length, sizeof(pub_der));
         printf("Was writing into der format successfull? 0 indicates success : %d\n", success);
-        
-    printf("DER IS %s\n\n\n\n", (const char*)pub_der);
-    printf("Expected DER is %s\n\n", ECC_PUBKEY_DER);
-    printf("Length of our der is %d, length of expected der is %d\n", der_length, ECC_PUBKEY_DER_LEN);
 
     return pub_der;
 }
