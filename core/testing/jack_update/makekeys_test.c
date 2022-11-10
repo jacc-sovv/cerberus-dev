@@ -12,12 +12,7 @@
 
 TEST_SUITE_LABEL ("makekeys");
 
-static void test_makekeys(CuTest *test){
-    TEST_START;
-    unsigned char * status = yet_another();
-    CuAssertPtrNotNull(test, status);
-    //CuAssertIntEquals (test, 0, status);
-}
+
 
 static void test_get_pub(CuTest *test){
     TEST_START;
@@ -41,7 +36,6 @@ static void test_get_priv(CuTest *test){
 
 
 TEST_SUITE_START (makekeys);
-TEST (test_makekeys);
 TEST (test_get_pub);
 TEST (test_get_priv);
 // TEST (test_revamp);
