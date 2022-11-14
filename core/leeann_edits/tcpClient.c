@@ -18,6 +18,9 @@ int tcp_client(){
 
   //Public key to send to the server, encoded in DER format
   uint8_t* pub_key_der = create_key_as_der();
+  FILE *fp = NULL;
+  fp = fopen("my_key.der", "w");
+  fwrite(pub_key_der, sizeof(uint8_t), DER_LEN, fp);
 
   char* ip = "127.0.0.1";
   int port = 5577;
@@ -48,6 +51,7 @@ int tcp_client(){
   
 
   send(sock, pub_key_der, DER_LEN, 0); //Will always be length 91 for this curve
+
 
   uint8_t buffer[DER_LEN];
   bzero(buffer, DER_LEN);
@@ -110,6 +114,14 @@ int tcp_client(){
   send(sock, AES_IV, AES_IV_LEN, 0);
   send(sock, tag_test, sizeof(tag_test), 0);
   send(sock, my_plaintext, sizeof(my_plaintext), 0);  //Send the OG msg
+  // uint8_t server_secret[out_len];
+  // recv(sock, server_secret, out_len, 0);
+  printf("Testing if secrets are the same:");
+  for(int i = 0; i < out_len; i++){
+    if(server_secret[i] != out[i])
+    printf("Different secret!");
+  }
+
 
 
   //Receive the server's encrypted message
