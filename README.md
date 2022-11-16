@@ -15,6 +15,17 @@ ninja
 ./cerberus-linux-unit-tests
 ```
 
+How to run with the server:
+1) Extract the server from the tar file I sent  
+2) Run the server first, it will wait for client to connect  
+2a) If on the CSU machines, type:
+```
+module load python/bundle-3.9
+(If you don't have cryptography already installed)
+pip3 install cryptography --user
+```
+3) Run the client  
+
 
 
 # Project Cerberus
