@@ -18,9 +18,10 @@ int tcp_client(){
 
   //Public key to send to the server, encoded in DER format
   uint8_t* pub_key_der = create_key_as_der();
+  //Call the generate api here!
 
   char* ip = "127.0.0.1";
-  int port = 5577;
+  int port = 5572;
 
   int sock;
   struct sockaddr_in addr;
@@ -73,7 +74,7 @@ int tcp_client(){
   int out_len = engine.base.compute_shared_secret (&engine.base, &cli_priv_key, &serv_pub_key, out, sizeof (out));
   printf("Client's generated shared secret is\n");
   for(int i = 0; i < out_len; i++){
-    printf("%d", out[i]);
+    printf("%c", out[i]);
   }
   printf("\n");
   fflush(NULL);
@@ -93,11 +94,12 @@ int tcp_client(){
 
 
 
-  uint8_t my_plaintext[128] = "hello from client";
+  uint8_t my_plaintext[128] = "Production ID (Client)";
+  
 
   uint8_t decrypted_plaintext[msg_length];
   uint8_t ciphertext_test[msg_length];
-	uint8_t tag_test[AES_GCM_TAG_LEN * 2];
+	uint8_t tag_test[AES_GCM_TAG_LEN];
 
   aes_engine.base.set_key (&aes_engine.base, out, out_len);
   aes_engine.base.encrypt_data (&aes_engine.base, my_plaintext, sizeof(my_plaintext), AES_IV,
@@ -109,14 +111,14 @@ int tcp_client(){
   send(sock, ciphertext_test, sizeof(ciphertext_test), 0);
   send(sock, AES_IV, AES_IV_LEN, 0);
   send(sock, tag_test, sizeof(tag_test), 0);
-  send(sock, my_plaintext, sizeof(my_plaintext), 0);  //Send the OG msg
+  //send(sock, my_plaintext, sizeof(my_plaintext), 0);  //Send the OG msg
 
 
   //Receive the server's encrypted message
-  uint8_t serv_enc[msg_length];
-  uint8_t server_tag[AES_GCM_TAG_LEN * 2];
+  uint8_t serv_enc[128];
+  uint8_t server_tag[AES_GCM_TAG_LEN];
   bzero(serv_enc, msg_length);
-  recv(sock, serv_enc, msg_length, 0);
+  recv(sock, serv_enc, 128, 0);
   recv(sock, server_tag, sizeof(server_tag), 0);
 
 
@@ -124,14 +126,20 @@ int tcp_client(){
 //Is the server's encryption the same as mine?
   //Can I decrypt the server's message?
 
-  printf("Encrypted server message : %s\n\n", serv_enc);
-    fflush(stdout);
+  printf("Encrypted server message : \n");
+
+  for(int i = 0; i < (int)sizeof(serv_enc); i++){
+    printf("%c", serv_enc[i]);
+  }
+  printf("\n");
+
+    //fflush(stdout);
   bzero(decrypted_plaintext, sizeof(decrypted_plaintext));
     aes_engine.base.decrypt_data (&aes_engine.base, serv_enc, sizeof(serv_enc),
 		server_tag, AES_IV, AES_IV_LEN, decrypted_plaintext, sizeof (decrypted_plaintext));
 
   printf("Decrypted server message :  %s\n\n", decrypted_plaintext);
-    fflush(stdout);
+    //fflush(stdout);
 
   //It works!
 
