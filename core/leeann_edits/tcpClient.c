@@ -72,6 +72,7 @@ int tcp_client(){
   int shared_length = engine.base.get_shared_secret_max_length(&engine.base, &cli_priv_key);
   uint8_t out[shared_length];
   int out_len = engine.base.compute_shared_secret (&engine.base, &cli_priv_key, &serv_pub_key, out, sizeof (out));
+  printf("Out_len is %d, while shared_length is %d\n", out_len, shared_length);
   printf("Client's generated shared secret is\n");
   for(int i = 0; i < out_len; i++){
     printf("%c", out[i]);
@@ -160,10 +161,10 @@ int tcp_client(){
 
 
   printf("Using an incorrect key, the decrypted server message is : %s\n", wrong_server_decryption);
-  printf("Error code : %d, corresponding to 'The decrypted plaintext failed authentication.'\n", status);
+  printf("Error code : %x, corresponding to 'The decrypted plaintext failed authentication.'\n", status);
   close(sock);
   printf("Disconnected from the server.\n");
-  exit(20);
+  // exit(20);
   return 0;
 
 }
