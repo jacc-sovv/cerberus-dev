@@ -56,22 +56,6 @@ static void test_keygenstate(CuTest *test){
 
 }
 
-static void test_keyexchange(CuTest *test){
-    TEST_START;
-    struct ecc_private_key priv_key;
-	struct ecc_public_key pub_key;
-    size_t keysize = (256 / 8);
-    int state = -1;
-    int status = keygenstate(keysize, &priv_key, &pub_key, &state);
-    CuAssertPtrNotNull(test, pub_key.context);
-    CuAssertPtrNotNull(test, priv_key.context);
-    CuAssertIntEquals(test, 1, status);
-
-    status = keyexchange(&pub_key, &state);
-    CuAssertIntEquals(test, 1, status);
-    CuAssertIntEquals(test, 2, state);
-
-}
 
 static void test_secretkey(CuTest *test){
     TEST_START;
@@ -127,7 +111,6 @@ TEST (test_get_pub);
 TEST (test_get_priv);
 TEST (test_lockstate);
 TEST (test_keygenstate);
-TEST (test_keyexchange);
 TEST (test_secretkey);
 
 // TEST (test_revamp);

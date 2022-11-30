@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#include <stdbool.h>
 #include "crypto/ecc.h"
 #include "crypto/ecc_mbedtls.h"
 #include "testing/crypto/ecc_testing.h"
@@ -33,8 +34,6 @@ int lockstate(char** state_check, int *state);
 int keygenstate(size_t key_length, struct ecc_private_key *privkey, struct ecc_public_key *pubkey, int *state);
 
 
-int keyexchange(struct ecc_public_key *pubkey, int *state);
-
 
 /**
  * Generates a secret key
@@ -46,3 +45,49 @@ int keyexchange(struct ecc_public_key *pubkey, int *state);
 */
 int secretkey(struct ecc_private_key *privkey, struct ecc_public_key *pubkey, uint8_t *secret, int *state);
 
+
+/**
+ * Uses AES-GCM encryption to encrypt a message into ciphertext using a secret key
+ * @param msg A plaintext message you would like to encrypt
+ * @param secret A secret key to use for encryption
+ * @param AESIV An IV to use for encryption. A 12-byte IV is best (meets NIST standards)
+ * @param tag The buffer to hold the GCM authentication tag. All tags will be 16 bytes
+ * @param ciphertext The buffer to hold the encrypted data. The ciphertext will be the same length as the plaintext
+ * @param state An int to hold the numerical value of the state
+ * @return 1 on success
+*/
+int encryptionPID(uint8_t *msg, uint8_t *secret, uint8_t *AESIV, uint8_t *tag, uint8_t *chiphertext, int *state);
+
+/**
+ * A function to generate a random string as a OTP, and encrypt that OTP
+ * @param secret The secret key to encrypt the OTP with
+ * @param AESIV An IV to use for encryption. A 12-byte IV is best (meets NIST standards)
+ * @param tag The buffer to hold the GCM authentication tag. All tags will be 16 bytes
+ * @param OTP A buffer to hold a randomly generated OTP into
+ * @param OTPs A buffer to hold the encrypted OTP in
+ * @param state An int to hold the numerical value of the state
+ * @return 1 on success
+*/
+int OTPgen(uint8_t *secret,  uint8_t *AESIV, uint8_t *tag, uint8_t *OTP, uint8_t *OTPs, int *state);
+
+/**
+ * Decrypts an encrypted OTP and compares it to a 
+ * @param secret The secret key used to decrypt OTPs
+ * @param AESIV An IV to use for decryption. Must be the same as the IV provided to encrypt
+ * @param tag The GCM tag for ciphertext
+ * @param OTPs Encrypted OTP to be decrypted
+ * @param valOTP OTP to be validated against the decrypted OTP
+ * @param result A boolean value to check whether the OTP was successfully validated
+ * @param An int to hold the numerical value of the state
+ * @return 1 on success
+*/
+int OTPvalidation(uint8_t * secret, uint8_t *AESIV, uint8_t *tag, uint8_t *OTPs, uint8_t *valOTP, bool *result, int *state);
+
+/**
+ * Unlocks the device and sets the state appropriately
+ * @param result A value containing the result of the unlock attempt
+ * @param state_check A String to be loaded with the current status of the state (This device is currently in unlock state)
+ * @param state An int to hold the numerical value of the state
+ * @return 1 on success
+*/
+int Unlock(bool *result, char **state_check, int *state);

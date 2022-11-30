@@ -92,27 +92,6 @@ int keygenstate(size_t key_length, struct ecc_private_key *privkey, struct ecc_p
   }
 }
 
-int keyexchange(struct ecc_public_key *pubkey, int *state){
-  struct ecc_engine_mbedtls engine;
-  ecc_mbedtls_init (&engine);
-  uint8_t *pub_der = NULL;
-
-  if(!pub_der){
-    printf("pub_der is null (as expected)\n");
-  }
-
-  size_t der_length;
-  int success = engine.base.get_public_key_der (&engine.base, pubkey, &pub_der, &der_length);
-
-  //Send pub_der to server (how?)
-  if(!pub_der){
-    printf("pub_der is null (NOT as expected)\n");
-  }
-
-  *state = 2;
-  return success+1;
-
-}
 
 int secretkey(struct ecc_private_key *privkey, struct ecc_public_key *pubkey, uint8_t *secret, int *state){
   struct ecc_engine_mbedtls engine;
