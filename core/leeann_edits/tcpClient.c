@@ -10,15 +10,35 @@
 #include "testing/crypto/base64_testing.h"
 #include "crypto/base64.h"
 #include "crypto/base64_mbedtls.h"
+
 #define ELLIPTIC_CURVE MBEDTLS_ECP_DP_SECP256R1
 #define DER_LEN 91
 
+uint8_t AES_IV_TESTING2[] = {
+	0x20,0x21,0x22,0x23,0x24,0x25,0x26,0x27,0x28,0x29,0x2a,0x2b
+};
 
 int tcp_client(){
 
-  //Public key to send to the server, encoded in DER format
-  uint8_t* pub_key_der = create_key_as_der();
-  //Call the generate api here!
+
+  char* state_check = "initial";
+  int state = -1;
+  int status = lockstate(&state_check, &state);
+
+  struct ecc_private_key priv_key;
+	struct ecc_public_key pub_key;
+  size_t keysize = (256 / 8);
+
+  status = keygenstate(keysize, &priv_key, &pub_key, &state);
+
+  struct ecc_engine_mbedtls engine;
+  ecc_mbedtls_init (&engine);
+
+  uint8_t *pub_der = NULL;
+  size_t der_length;
+  int success = engine.base.get_public_key_der (&engine.base, &pub_key, &pub_der, &der_length);
+  printf("Was DER successfull? 0 indicates success %d\n", success);
+  
 
   char* ip = "127.0.0.1";
   int port = 5572;
@@ -48,7 +68,7 @@ int tcp_client(){
 
   
 
-  send(sock, pub_key_der, DER_LEN, 0); //Will always be length 91 for this curve
+  send(sock, pub_der, DER_LEN, 0); //Will always be length 91 for this curve
 
   uint8_t buffer[DER_LEN];
   bzero(buffer, DER_LEN);
@@ -57,10 +77,7 @@ int tcp_client(){
 
   //At this point, buffer should be der encoded server public key
 
-  struct ecc_engine_mbedtls engine;
   struct ecc_public_key serv_pub_key;
-  struct ecc_private_key cli_priv_key = ecc_keys_get_priv();
-  ecc_mbedtls_init (&engine);
 
   //Initialize a public key that we can use inside of cerberus from the server's DER encoded public key
   engine.base.init_public_key(&engine.base, buffer, DER_LEN, &serv_pub_key);
@@ -69,48 +86,34 @@ int tcp_client(){
 
 
   //Compute shared secret
-  int shared_length = engine.base.get_shared_secret_max_length(&engine.base, &cli_priv_key);
-  uint8_t out[shared_length];
-  int out_len = engine.base.compute_shared_secret (&engine.base, &cli_priv_key, &serv_pub_key, out, sizeof (out));
-  printf("Out_len is %d, while shared_length is %d\n", out_len, shared_length);
-  printf("Client's generated shared secret is\n");
-  for(int i = 0; i < out_len; i++){
-    printf("%c", out[i]);
-  }
-  printf("\n");
-  fflush(NULL);
-  
+  int secret_size = engine.base.get_shared_secret_max_length(&engine.base, &priv_key);
+  uint8_t secret[secret_size];
+  status = secretkey(&priv_key, &serv_pub_key, secret, &state);
+  printf("State is now %d\n", state);
+  printf("Secret key is %s\n", secret);
 
 
   //Sends the shared secret to the server (mainly for testing purposes to be sure they are the same)
-  send(sock, out, out_len, 0);
+  send(sock, secret, secret_size, 0);
 
 
 
   //Encrypt a message to send
-
-  struct aes_engine_mbedtls aes_engine;	
-  aes_mbedtls_init (&aes_engine);
   int msg_length = 128;
-
-
-
-  uint8_t my_plaintext[128] = "Production ID (Client)";
-  
-
-  uint8_t decrypted_plaintext[msg_length];
-  uint8_t ciphertext_test[msg_length];
+  uint8_t my_plaintext[128];
+  uint8_t ciphertext[msg_length];
 	uint8_t tag_test[AES_GCM_TAG_LEN];
 
-  aes_engine.base.set_key (&aes_engine.base, out, out_len);
-  int stat = aes_engine.base.encrypt_data (&aes_engine.base, my_plaintext, sizeof(my_plaintext), AES_IV,
-		AES_IV_LEN, ciphertext_test, sizeof (ciphertext_test), tag_test, sizeof (tag_test));
+  status = OTPgen(secret, secret_size, AES_IV_TESTING2, AES_IV_LEN, tag_test, my_plaintext, sizeof(my_plaintext), ciphertext, &state);
 
-  printf("In tcpclient, stat is %d\n", stat);
 
-  printf("Sending server my message : %s\n", my_plaintext);
-  send(sock, ciphertext_test, sizeof(ciphertext_test), 0);
-  send(sock, AES_IV, AES_IV_LEN, 0);
+  printf("State is now %d\n", state);
+  printf("Plaintext message is %s\n", my_plaintext);
+
+
+
+  send(sock, ciphertext, sizeof(ciphertext), 0);
+  send(sock, AES_IV_TESTING2, AES_IV_LEN, 0);
   send(sock, tag_test, sizeof(tag_test), 0);
   //send(sock, my_plaintext, sizeof(my_plaintext), 0);  //Send the OG msg
 
@@ -134,14 +137,12 @@ int tcp_client(){
   }
   printf("\n");
 
-    //fflush(stdout);
-  bzero(decrypted_plaintext, sizeof(decrypted_plaintext));
-    aes_engine.base.decrypt_data (&aes_engine.base, serv_enc, sizeof(serv_enc),
-		server_tag, AES_IV, AES_IV_LEN, decrypted_plaintext, sizeof (decrypted_plaintext));
 
-  printf("Decrypted server message :  %s\n\n", decrypted_plaintext);
-    //fflush(stdout);
+  uint8_t expected_server_message[128] = "Production ID (Server)";
+  bool result;
+  status = OTPvalidation(secret, secret_size, AES_IV_TESTING2, AES_IV_LEN, server_tag, serv_enc, sizeof(serv_enc), expected_server_message, &result, &state);
 
+  printf("Are the messages the same? %d\n", result);
   //It works!
 
   //What happens when I have a different shared secret then you?
@@ -156,7 +157,7 @@ int tcp_client(){
   aes_engine_bad.base.set_key(&aes_engine_bad.base, ECC_DH_SECRET_WRONG, sizeof(ECC_DH_SECRET_WRONG));
 
   uint8_t wrong_server_decryption[msg_length];
-  int status = aes_engine_bad.base.decrypt_data(&aes_engine_bad.base, serv_enc, sizeof(serv_enc), server_tag, AES_IV, AES_IV_LEN,
+  status = aes_engine_bad.base.decrypt_data(&aes_engine_bad.base, serv_enc, sizeof(serv_enc), server_tag, AES_IV_TESTING2, AES_IV_LEN,
                                   wrong_server_decryption, sizeof(wrong_server_decryption));
 
 
@@ -164,7 +165,7 @@ int tcp_client(){
   printf("Error code : %x, corresponding to 'The decrypted plaintext failed authentication.'\n", status);
   close(sock);
   printf("Disconnected from the server.\n");
-  // exit(20);
+  exit(20);
   return 0;
 
 }
