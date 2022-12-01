@@ -9,8 +9,13 @@
 #include "crypto/ecc.h"
 #include "crypto/ecc_mbedtls.h"
 #include "testing/crypto/ecc_testing.h"
+#include "crypto/rng_mbedtls.h"
+#include "crypto/base64_mbedtls.h"
 
 TEST_SUITE_LABEL ("makekeys");
+uint8_t AES_IV_TESTING[] = {
+	0x20,0x21,0x22,0x23,0x24,0x25,0x26,0x27,0x28,0x29,0x2a,0x2b
+};
 
 
 
@@ -94,9 +99,240 @@ static void test_secretkey(CuTest *test){
     status = secretkey(&priv_key2, &pub_key1, secret2, &state);
     CuAssertIntEquals(test, 1, status);
 
+    printf("Secret is %s", secret1);
     status = testing_validate_array (secret1, secret2, sizeof(secret1));
     CuAssertIntEquals (test, 0, status);
 
+}
+
+static void test_encryptionPID(CuTest *test){
+    TEST_START;
+    size_t keysize = (256 / 8);
+    int state = -1;
+    struct ecc_private_key priv_key1;
+	struct ecc_public_key pub_key1;
+    struct ecc_private_key priv_key2;
+	struct ecc_public_key pub_key2;
+
+
+    struct ecc_engine_mbedtls engine;
+    ecc_mbedtls_init (&engine);
+
+
+
+    int status = keygenstate(keysize, &priv_key1, &pub_key1, &state);
+    CuAssertIntEquals(test, 1, status);
+
+    status = keygenstate(keysize, &priv_key2, &pub_key2, &state);
+    CuAssertIntEquals(test, 1, status);
+
+    int shared_length = engine.base.get_shared_secret_max_length(&engine.base, &priv_key2);
+    int shared_length2 = engine.base.get_shared_secret_max_length(&engine.base, &priv_key1);
+    ecc_mbedtls_release(&engine);
+
+
+    CuAssertIntEquals(test, shared_length2, shared_length);
+
+    uint8_t secret1[shared_length];
+    uint8_t secret2[shared_length];
+
+    status = secretkey(&priv_key1, &pub_key2, secret1, &state);
+    CuAssertIntEquals(test, 1, status);
+
+    status = secretkey(&priv_key2, &pub_key1, secret2, &state);
+    CuAssertIntEquals(test, 1, status);
+
+    printf("Secret is %s", secret1);
+    status = testing_validate_array (secret1, secret2, sizeof(secret1));
+    CuAssertIntEquals (test, 0, status);
+
+    int msg_length = 128;
+    uint8_t msg[128] = "Hi!";
+    uint8_t ciphertext[msg_length];
+    uint8_t tag[16];    //Tags are always length 16
+
+    status = encryptionPID(msg, msg_length, secret1, sizeof(secret1), AES_IV_TESTING, sizeof(AES_IV_TESTING), tag, ciphertext, &state);
+    printf("Status is %d\n", status);
+    printf("Encrypted msg is %s", ciphertext);
+
+    CuAssertIntEquals(test, 1, status);
+    CuAssertIntEquals(test, 4, state);
+
+}
+
+static void test_randomness(CuTest *test){
+    TEST_START;
+    struct rng_engine_mbedtls engine;
+	uint8_t buffer[32] = {0};
+	uint8_t zero[32] = {0};
+	int status;
+
+	TEST_START;
+
+	status = rng_mbedtls_init (&engine);
+	CuAssertIntEquals (test, 0, status);
+
+	status = engine.base.generate_random_buffer (&engine.base, 32, buffer);
+	CuAssertIntEquals (test, 0, status);
+
+	status = testing_validate_array (zero, buffer, sizeof (buffer));
+	CuAssertTrue (test, (status != 0));
+	rng_mbedtls_release (&engine);
+    
+    //buffer to b64
+    
+    // struct base64_engine_mbedtls engine2;
+    // int min_b64_len = (48 * 2);       //B64 encodes 4 bytes for every 3 bytes of the string
+	// uint8_t out[min_b64_len];
+    // printf("min length is %d\n", min_b64_len);
+
+	// memset (out, 0xff, sizeof (out));
+
+	// status = base64_mbedtls_init (&engine2);
+	// CuAssertIntEquals (test, 0, status);
+    // printf("test1\n");
+	// status = engine2.base.encode (&engine2.base, buffer, sizeof(buffer), out,
+	// 	sizeof (out));
+	// //CuAssertIntEquals (test, 0, status);
+    // printf("status is %d\n", status);
+    // printf("Base 64 encoded string has length %d and is %s\n", sizeof(out), out);
+
+	// base64_mbedtls_release (&engine2);
+}
+
+static void test_OTPgen(CuTest *test){
+    TEST_START;
+    size_t keysize = (256 / 8);
+    int state = -1;
+    struct ecc_private_key priv_key1;
+	struct ecc_public_key pub_key1;
+    struct ecc_private_key priv_key2;
+	struct ecc_public_key pub_key2;
+
+
+    struct ecc_engine_mbedtls engine;
+    ecc_mbedtls_init (&engine);
+
+
+
+    int status = keygenstate(keysize, &priv_key1, &pub_key1, &state);
+    CuAssertIntEquals(test, 1, status);
+
+    status = keygenstate(keysize, &priv_key2, &pub_key2, &state);
+    CuAssertIntEquals(test, 1, status);
+
+    int shared_length = engine.base.get_shared_secret_max_length(&engine.base, &priv_key2);
+    uint8_t secret[shared_length];
+
+    status = secretkey(&priv_key1, &pub_key2, secret, &state);
+    CuAssertIntEquals(test, 1, status);
+
+    size_t OTPsize = 32;
+    uint8_t tag[16];
+    uint8_t OTP[OTPsize];
+    uint8_t OTPs[OTPsize];
+    status = OTPgen(secret, sizeof(secret), AES_IV_TESTING, sizeof(AES_IV_TESTING), tag, OTP, OTPsize, OTPs, &state);
+    printf("OTPs is %s\n", OTPs);
+    CuAssertPtrNotNull(test, OTPs);
+    CuAssertIntEquals(test, 1, status);
+    CuAssertIntEquals(test, 5, state);
+}
+
+static void test_OTPvalidation(CuTest *test){
+    TEST_START;
+    size_t keysize = (256 / 8);
+    int state = -1;
+    struct ecc_private_key priv_key1;
+	struct ecc_public_key pub_key1;
+    struct ecc_private_key priv_key2;
+	struct ecc_public_key pub_key2;
+
+
+    struct ecc_engine_mbedtls engine;
+    ecc_mbedtls_init (&engine);
+
+
+
+    int status = keygenstate(keysize, &priv_key1, &pub_key1, &state);
+    CuAssertIntEquals(test, 1, status);
+
+    status = keygenstate(keysize, &priv_key2, &pub_key2, &state);
+    CuAssertIntEquals(test, 1, status);
+
+    int shared_length = engine.base.get_shared_secret_max_length(&engine.base, &priv_key2);
+    uint8_t secret[shared_length];
+
+    status = secretkey(&priv_key1, &pub_key2, secret, &state);
+    CuAssertIntEquals(test, 1, status);
+
+    size_t OTPsize = 32;
+    uint8_t tag[16];
+    uint8_t OTP[OTPsize];
+    uint8_t OTPs[OTPsize];
+    status = OTPgen(secret, sizeof(secret), AES_IV_TESTING, sizeof(AES_IV_TESTING), tag, OTP, OTPsize, OTPs, &state);
+    printf("OTPs is %s\n", OTPs);
+    CuAssertPtrNotNull(test, OTPs);
+    CuAssertIntEquals(test, 1, status);
+    CuAssertIntEquals(test, 5, state);
+    printf("Tag is %s\n", tag);
+
+    bool result;
+    status = OTPvalidation(secret, sizeof(secret), AES_IV_TESTING, sizeof(AES_IV_TESTING), tag, OTPs, sizeof(OTPs), OTP, &result, &state);
+    printf("Result is %d\n", result);
+
+    CuAssertIntEquals(test, 1, result);
+    CuAssertIntEquals(test, 6, state);
+    CuAssertIntEquals(test, 1, status);
+}
+
+static void test_unlock(CuTest *test){
+    TEST_START;
+    size_t keysize = (256 / 8);
+    int state = -1;
+    struct ecc_private_key priv_key1;
+	struct ecc_public_key pub_key1;
+    struct ecc_private_key priv_key2;
+	struct ecc_public_key pub_key2;
+
+
+    struct ecc_engine_mbedtls engine;
+    ecc_mbedtls_init (&engine);
+
+
+
+    int status = keygenstate(keysize, &priv_key1, &pub_key1, &state);
+    CuAssertIntEquals(test, 1, status);
+
+    status = keygenstate(keysize, &priv_key2, &pub_key2, &state);
+    CuAssertIntEquals(test, 1, status);
+
+    int shared_length = engine.base.get_shared_secret_max_length(&engine.base, &priv_key2);
+    uint8_t secret[shared_length];
+
+    status = secretkey(&priv_key1, &pub_key2, secret, &state);
+    CuAssertIntEquals(test, 1, status);
+
+    size_t OTPsize = 32;
+    uint8_t tag[16];
+    uint8_t OTP[OTPsize];
+    uint8_t OTPs[OTPsize];
+    status = OTPgen(secret, sizeof(secret), AES_IV_TESTING, sizeof(AES_IV_TESTING), tag, OTP, OTPsize, OTPs, &state);
+    printf("OTPs is %s\n", OTPs);
+    CuAssertPtrNotNull(test, OTPs);
+    CuAssertIntEquals(test, 1, status);
+    CuAssertIntEquals(test, 5, state);
+    printf("Tag is %s\n", tag);
+
+    bool result;
+    status = OTPvalidation(secret, sizeof(secret), AES_IV_TESTING, sizeof(AES_IV_TESTING), tag, OTPs, sizeof(OTPs), OTP, &result, &state);
+
+    char* state_check = "initial";
+    state = -1;
+
+    status = Unlock(&result, &state_check, &state);
+    printf("State_check string is now %s\n", state_check);
+    CuAssertIntEquals(test, 7, state);
+    CuAssertIntEquals(test, 1, status);
 }
 
 // static void test_revamp(CuTest *test){
@@ -112,6 +348,11 @@ TEST (test_get_priv);
 TEST (test_lockstate);
 TEST (test_keygenstate);
 TEST (test_secretkey);
+TEST (test_encryptionPID);
+TEST (test_randomness);
+TEST (test_OTPgen);
+TEST (test_OTPvalidation);
+TEST (test_unlock);
 
 // TEST (test_revamp);
 TEST_SUITE_END;
