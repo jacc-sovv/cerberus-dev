@@ -25,19 +25,21 @@ int tcp_client(){
   int state = -1;
   int status = lockstate(&state_check, &state);
 
+  printf("State is now %s\n", state_check);
   struct ecc_private_key priv_key;
 	struct ecc_public_key pub_key;
   size_t keysize = (256 / 8);
 
   status = keygenstate(keysize, &priv_key, &pub_key, &state);
 
+  printf("State's value after keygen : %d\n", state);
+
   struct ecc_engine_mbedtls engine;
   ecc_mbedtls_init (&engine);
 
   uint8_t *pub_der = NULL;
   size_t der_length;
-  int success = engine.base.get_public_key_der (&engine.base, &pub_key, &pub_der, &der_length);
-  printf("Was DER successfull? 0 indicates success %d\n", success);
+  engine.base.get_public_key_der (&engine.base, &pub_key, &pub_der, &der_length);
   
 
   char* ip = "127.0.0.1";
@@ -89,7 +91,7 @@ int tcp_client(){
   int secret_size = engine.base.get_shared_secret_max_length(&engine.base, &priv_key);
   uint8_t secret[secret_size];
   status = secretkey(&priv_key, &serv_pub_key, secret, &state);
-  printf("State is now %d\n", state);
+  printf("State's value after secretkey : %d\n", state);
   printf("Secret key is %s\n", secret);
 
 
@@ -104,11 +106,11 @@ int tcp_client(){
   uint8_t ciphertext[msg_length];
 	uint8_t tag_test[AES_GCM_TAG_LEN];
 
+  //Generate a random string, stores it into my_plaintext
   status = OTPgen(secret, secret_size, AES_IV_TESTING2, AES_IV_LEN, tag_test, my_plaintext, sizeof(my_plaintext), ciphertext, &state);
+  printf("State's value after OTPgen : %d\n", state);
 
-
-  printf("State is now %d\n", state);
-  printf("Plaintext message is %s\n", my_plaintext);
+  printf("OTP message is %s\n", my_plaintext);
 
 
 
@@ -140,10 +142,17 @@ int tcp_client(){
 
   uint8_t expected_server_message[128] = "Production ID (Server)";
   bool result;
+  //Validate's that server's "OTP" is Production ID (Server) (Basically decrypts server's message, verifies it is what our expected hardcoded message is)
   status = OTPvalidation(secret, secret_size, AES_IV_TESTING2, AES_IV_LEN, server_tag, serv_enc, sizeof(serv_enc), expected_server_message, &result, &state);
+  printf("State's value after OTPvalidation : %d\n", state);
 
-  printf("Are the messages the same? %d\n", result);
+  printf("Are the messages the same? 1 indicates True : %d\n", result);
   //It works!
+
+  status = Unlock(&result, &state_check, &state);
+  printf("State's value after unlocking : %d\n", state);
+  printf("Checking state after unlocking : %s\n", state_check);
+
 
   //What happens when I have a different shared secret then you?
   struct aes_engine_mbedtls aes_engine_bad;	

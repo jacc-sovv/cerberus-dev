@@ -38,9 +38,7 @@ static void test_lockstate(CuTest *test){
     char* state_check = "initial";
     int state = -1;
 
-    printf("About to call lockstate\n");
     int status = lockstate(&state_check, &state);
-    printf("State_check string is now %s\n", state_check);
     CuAssertIntEquals(test, 0, state);
     CuAssertIntEquals(test, 1, status);
 }
@@ -99,7 +97,6 @@ static void test_secretkey(CuTest *test){
     status = secretkey(&priv_key2, &pub_key1, secret2, &state);
     CuAssertIntEquals(test, 1, status);
 
-    printf("Secret is %s", secret1);
     status = testing_validate_array (secret1, secret2, sizeof(secret1));
     CuAssertIntEquals (test, 0, status);
 
@@ -142,7 +139,6 @@ static void test_encryptionPID(CuTest *test){
     status = secretkey(&priv_key2, &pub_key1, secret2, &state);
     CuAssertIntEquals(test, 1, status);
 
-    printf("Secret is %s", secret1);
     status = testing_validate_array (secret1, secret2, sizeof(secret1));
     CuAssertIntEquals (test, 0, status);
 
@@ -152,8 +148,6 @@ static void test_encryptionPID(CuTest *test){
     uint8_t tag[16];    //Tags are always length 16
 
     status = encryptionPID(msg, msg_length, secret1, sizeof(secret1), AES_IV_TESTING, sizeof(AES_IV_TESTING), tag, ciphertext, &state);
-    printf("Status is %d\n", status);
-    printf("Encrypted msg is %s", ciphertext);
 
     CuAssertIntEquals(test, 1, status);
     CuAssertIntEquals(test, 4, state);
@@ -232,7 +226,6 @@ static void test_OTPgen(CuTest *test){
     uint8_t OTP[OTPsize];
     uint8_t OTPs[OTPsize];
     status = OTPgen(secret, sizeof(secret), AES_IV_TESTING, sizeof(AES_IV_TESTING), tag, OTP, OTPsize, OTPs, &state);
-    printf("OTPs is %s\n", OTPs);
     CuAssertPtrNotNull(test, OTPs);
     CuAssertIntEquals(test, 1, status);
     CuAssertIntEquals(test, 5, state);
@@ -270,15 +263,12 @@ static void test_OTPvalidation(CuTest *test){
     uint8_t OTP[OTPsize];
     uint8_t OTPs[OTPsize];
     status = OTPgen(secret, sizeof(secret), AES_IV_TESTING, sizeof(AES_IV_TESTING), tag, OTP, OTPsize, OTPs, &state);
-    printf("OTPs is %s\n", OTPs);
     CuAssertPtrNotNull(test, OTPs);
     CuAssertIntEquals(test, 1, status);
     CuAssertIntEquals(test, 5, state);
-    printf("Tag is %s\n", tag);
 
     bool result;
     status = OTPvalidation(secret, sizeof(secret), AES_IV_TESTING, sizeof(AES_IV_TESTING), tag, OTPs, sizeof(OTPs), OTP, &result, &state);
-    printf("Result is %d\n", result);
 
     CuAssertIntEquals(test, 1, result);
     CuAssertIntEquals(test, 6, state);
@@ -317,11 +307,9 @@ static void test_unlock(CuTest *test){
     uint8_t OTP[OTPsize];
     uint8_t OTPs[OTPsize];
     status = OTPgen(secret, sizeof(secret), AES_IV_TESTING, sizeof(AES_IV_TESTING), tag, OTP, OTPsize, OTPs, &state);
-    printf("OTPs is %s\n", OTPs);
     CuAssertPtrNotNull(test, OTPs);
     CuAssertIntEquals(test, 1, status);
     CuAssertIntEquals(test, 5, state);
-    printf("Tag is %s\n", tag);
 
     bool result;
     status = OTPvalidation(secret, sizeof(secret), AES_IV_TESTING, sizeof(AES_IV_TESTING), tag, OTPs, sizeof(OTPs), OTP, &result, &state);
@@ -330,7 +318,6 @@ static void test_unlock(CuTest *test){
     state = -1;
 
     status = Unlock(&result, &state_check, &state);
-    printf("State_check string is now %s\n", state_check);
     CuAssertIntEquals(test, 7, state);
     CuAssertIntEquals(test, 1, status);
 }
