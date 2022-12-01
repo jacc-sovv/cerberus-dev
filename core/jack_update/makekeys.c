@@ -102,8 +102,7 @@ int secretkey(struct ecc_private_key *privkey, struct ecc_public_key *pubkey, ui
   ecc_mbedtls_init (&engine);
   int shared_length = engine.base.get_shared_secret_max_length(&engine.base, privkey);
   uint8_t out[shared_length];
-  int out_len = engine.base.compute_shared_secret (&engine.base, privkey, pubkey, out, sizeof (out));
-  printf("Is out_len the same as sizeof (secret)? %d  & %d\n", out_len, sizeof(out));
+  engine.base.compute_shared_secret (&engine.base, privkey, pubkey, out, sizeof (out));
 
   // for(int i = 0; i < shared_length; i++){
   //   secret[i] = out[i];
@@ -120,11 +119,8 @@ int encryptionPID(uint8_t *msg, size_t msg_size, uint8_t *secret, size_t secret_
 
 
   aes_engine.base.set_key(&aes_engine.base, secret, secret_length);
-  printf("Before encrypting, plaintext is %s\n", msg);
   int status = aes_engine.base.encrypt_data (&aes_engine.base, msg, msg_size, AESIV,
 		      AESIV_SIZE, ciphertext, msg_size, tag, 16);
-  printf("After encrypting, ciphertext is %s\n", ciphertext);
-printf("Status is %d\n", status);
   aes_mbedtls_release(&aes_engine);
 
   *state = 4;
@@ -134,24 +130,20 @@ printf("Status is %d\n", status);
 
 int OTPgen(uint8_t *secret,  size_t secret_size, uint8_t *AESIV, size_t aesiv_size, uint8_t *tag, uint8_t *OTP, size_t OTPsize, uint8_t *OTPs, int *state){
   struct rng_engine_mbedtls engine;
-	//uint8_t OTP[32] = {0};
 	int status;
 	status = rng_mbedtls_init (&engine);
-  printf("Before random buffer, OTP is %s\n", OTP);
 	status = engine.base.generate_random_buffer (&engine.base, OTPsize, OTP);
-  printf("After random buffer, OTP is %s\n", OTP);
 
   if(status != 0){
     printf("RNG engine failed!\n");
     exit(20);
   }
-printf("What is sizeofOTP? should be 32 but is %d\n", OTPsize);
 status = encryptionPID(OTP, OTPsize, secret, secret_size, AESIV, aesiv_size, tag, OTPs, state);
-printf("OTP is %s\n", OTP);
 
 *state = 5;
 return status;
 }
+
 
 int OTPvalidation(uint8_t * secret, size_t secret_size, uint8_t *AESIV, size_t AESIV_size, uint8_t *tag, uint8_t *OTPs, size_t OTPs_size, uint8_t *valOTP, bool *result, int *state){
   struct aes_engine_mbedtls aes_engine;	
