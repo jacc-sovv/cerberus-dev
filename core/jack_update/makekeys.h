@@ -56,7 +56,7 @@ int secretkey(struct ecc_private_key *privkey, struct ecc_public_key *pubkey, ui
  * @param state An int to hold the numerical value of the state
  * @return 1 on success
 */
-int encryptionPID(uint8_t *msg, uint8_t *secret, uint8_t *AESIV, uint8_t *tag, uint8_t *chiphertext, int *state);
+int encryptionPID(uint8_t *msg, size_t msg_size, uint8_t *secret, size_t secret_length, uint8_t *AESIV, size_t AESIV_SIZE, uint8_t *tag, uint8_t *ciphertext, int *state);
 
 /**
  * A function to generate a random string as a OTP, and encrypt that OTP
@@ -68,7 +68,7 @@ int encryptionPID(uint8_t *msg, uint8_t *secret, uint8_t *AESIV, uint8_t *tag, u
  * @param state An int to hold the numerical value of the state
  * @return 1 on success
 */
-int OTPgen(uint8_t *secret,  uint8_t *AESIV, uint8_t *tag, uint8_t *OTP, uint8_t *OTPs, int *state);
+int OTPgen(uint8_t *secret,  size_t secret_size, uint8_t *AESIV, size_t aesiv_size, uint8_t *tag, uint8_t *OTP, size_t OTPSize, uint8_t *OTPs, int *state);
 
 /**
  * Decrypts an encrypted OTP and compares it to a 
@@ -81,7 +81,7 @@ int OTPgen(uint8_t *secret,  uint8_t *AESIV, uint8_t *tag, uint8_t *OTP, uint8_t
  * @param An int to hold the numerical value of the state
  * @return 1 on success
 */
-int OTPvalidation(uint8_t * secret, uint8_t *AESIV, uint8_t *tag, uint8_t *OTPs, uint8_t *valOTP, bool *result, int *state);
+int OTPvalidation(uint8_t * secret, size_t secret_size, uint8_t *AESIV, size_t AESIV_size, uint8_t *tag, uint8_t *OTPs, size_t OTPs_size, uint8_t *valOTP, bool *result, int *state);
 
 /**
  * Unlocks the device and sets the state appropriately

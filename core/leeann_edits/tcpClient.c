@@ -103,10 +103,10 @@ int tcp_client(){
 	uint8_t tag_test[AES_GCM_TAG_LEN];
 
   aes_engine.base.set_key (&aes_engine.base, out, out_len);
-  aes_engine.base.encrypt_data (&aes_engine.base, my_plaintext, sizeof(my_plaintext), AES_IV,
+  int stat = aes_engine.base.encrypt_data (&aes_engine.base, my_plaintext, sizeof(my_plaintext), AES_IV,
 		AES_IV_LEN, ciphertext_test, sizeof (ciphertext_test), tag_test, sizeof (tag_test));
 
-
+  printf("In tcpclient, stat is %d\n", stat);
 
   printf("Sending server my message : %s\n", my_plaintext);
   send(sock, ciphertext_test, sizeof(ciphertext_test), 0);
