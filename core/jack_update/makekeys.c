@@ -113,7 +113,7 @@ int secretkey(struct ecc_private_key *privkey, struct ecc_public_key *pubkey, ui
   return 1;
 }
 
-int encryptionPID(uint8_t *msg, size_t msg_size, uint8_t *secret, size_t secret_length, uint8_t *AESIV, size_t AESIV_SIZE, uint8_t *tag, uint8_t *ciphertext, int *state){
+int encryption(uint8_t *msg, size_t msg_size, uint8_t *secret, size_t secret_length, uint8_t *AESIV, size_t AESIV_SIZE, uint8_t *tag, uint8_t *ciphertext, int *state){
   struct aes_engine_mbedtls aes_engine;	
   aes_mbedtls_init (&aes_engine);
 
@@ -128,6 +128,16 @@ int encryptionPID(uint8_t *msg, size_t msg_size, uint8_t *secret, size_t secret_
 
 }
 
+int decryption(uint8_t *ciphertext, size_t ciphertext_size, uint8_t *secret, size_t secret_length, uint8_t *AESIV, size_t AESIV_SIZE, uint8_t *tag, uint8_t *plaintext){
+  struct aes_engine_mbedtls aes_engine;	
+  aes_mbedtls_init (&aes_engine);
+  aes_engine.base.set_key (&aes_engine.base, secret, secret_length);
+
+  int stat = aes_engine.base.decrypt_data (&aes_engine.base, ciphertext, ciphertext_size,
+		tag, AESIV, AESIV_SIZE, plaintext, ciphertext_size);
+  return stat + 1;
+}
+
 int OTPgen(uint8_t *secret,  size_t secret_size, uint8_t *AESIV, size_t aesiv_size, uint8_t *tag, uint8_t *OTP, size_t OTPsize, uint8_t *OTPs, int *state){
   struct rng_engine_mbedtls engine;
 	int status;
@@ -138,7 +148,7 @@ int OTPgen(uint8_t *secret,  size_t secret_size, uint8_t *AESIV, size_t aesiv_si
     printf("RNG engine failed!\n");
     exit(20);
   }
-status = encryptionPID(OTP, OTPsize, secret, secret_size, AESIV, aesiv_size, tag, OTPs, state);
+status = encryption(OTP, OTPsize, secret, secret_size, AESIV, aesiv_size, tag, OTPs, state);
 
 *state = 5;
 return status;

@@ -59,7 +59,11 @@ int secretkey(struct ecc_private_key *privkey, struct ecc_public_key *pubkey, ui
  * @param state An int to hold the numerical value of the state
  * @return 1 on success
 */
-int encryptionPID(uint8_t *msg, size_t msg_size, uint8_t *secret, size_t secret_length, uint8_t *AESIV, size_t AESIV_SIZE, uint8_t *tag, uint8_t *ciphertext, int *state);
+int encryption(uint8_t *msg, size_t msg_size, uint8_t *secret, size_t secret_length, uint8_t *AESIV, size_t AESIV_SIZE, uint8_t *tag, uint8_t *ciphertext, int *state);
+
+
+
+int decryption(uint8_t *ciphertext, size_t ciphertext_size, uint8_t *secret, size_t secret_length, uint8_t *AESIV, size_t AESIV_SIZE, uint8_t *tag, uint8_t *plaintext);
 
 /**
  * A function to generate a random string as a OTP, and encrypt that OTP

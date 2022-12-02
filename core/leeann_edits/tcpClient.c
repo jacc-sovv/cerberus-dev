@@ -174,7 +174,7 @@ int tcp_client(){
   printf("Error code : %x, corresponding to 'The decrypted plaintext failed authentication.'\n", status);
   close(sock);
   printf("Disconnected from the server.\n");
-  exit(20);
+  // exit(20);
   return 0;
 
 }
