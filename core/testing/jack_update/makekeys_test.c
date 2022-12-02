@@ -147,11 +147,58 @@ static void test_encryptionPID(CuTest *test){
     uint8_t ciphertext[msg_length];
     uint8_t tag[16];    //Tags are always length 16
 
-    status = encryptionPID(msg, msg_length, secret1, sizeof(secret1), AES_IV_TESTING, sizeof(AES_IV_TESTING), tag, ciphertext, &state);
+    status = encryption(msg, msg_length, secret1, sizeof(secret1), AES_IV_TESTING, sizeof(AES_IV_TESTING), tag, ciphertext, &state);
 
     CuAssertIntEquals(test, 1, status);
     CuAssertIntEquals(test, 4, state);
 
+}
+
+static void test_decryption(CuTest *test){
+    TEST_START;
+    size_t keysize = (256 / 8);
+    int state = -1;
+    struct ecc_private_key priv_key1;
+	struct ecc_public_key pub_key1;
+    struct ecc_private_key priv_key2;
+	struct ecc_public_key pub_key2;
+
+
+    struct ecc_engine_mbedtls engine;
+    ecc_mbedtls_init (&engine);
+
+
+
+    int status = keygenstate(keysize, &priv_key1, &pub_key1, &state);
+    CuAssertIntEquals(test, 1, status);
+
+    status = keygenstate(keysize, &priv_key2, &pub_key2, &state);
+    CuAssertIntEquals(test, 1, status);
+
+    int shared_length = engine.base.get_shared_secret_max_length(&engine.base, &priv_key2);
+    ecc_mbedtls_release(&engine);
+
+
+
+    uint8_t secret1[shared_length];
+
+    status = secretkey(&priv_key1, &pub_key2, secret1, &state);
+    CuAssertIntEquals(test, 1, status);
+
+    int msg_length = 128;
+    uint8_t msg[128] = "Hi there!";
+    uint8_t ciphertext[msg_length];
+    uint8_t tag[16];    //Tags are always length 16
+
+    status = encryption(msg, msg_length, secret1, sizeof(secret1), AES_IV_TESTING, sizeof(AES_IV_TESTING), tag, ciphertext, &state);
+    
+    uint8_t decrypted_msg[msg_length];
+    status = decryption(ciphertext, sizeof(ciphertext), secret1, sizeof(secret1), AES_IV_TESTING, sizeof(AES_IV_TESTING), tag, decrypted_msg);
+    CuAssertIntEquals(test, 1, status);
+    printf("Inside decryption test, decrypted msg is %s\n", decrypted_msg);
+    status = testing_validate_array (msg, decrypted_msg, sizeof(decrypted_msg));
+    CuAssertIntEquals (test, 0, status);
+    
 }
 
 static void test_randomness(CuTest *test){
@@ -340,6 +387,7 @@ TEST (test_randomness);
 TEST (test_OTPgen);
 TEST (test_OTPvalidation);
 TEST (test_unlock);
+TEST (test_decryption);
 
 // TEST (test_revamp);
 TEST_SUITE_END;

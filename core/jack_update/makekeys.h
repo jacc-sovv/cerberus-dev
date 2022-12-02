@@ -59,7 +59,22 @@ int secretkey(struct ecc_private_key *privkey, struct ecc_public_key *pubkey, ui
  * @param state An int to hold the numerical value of the state
  * @return 1 on success
 */
-int encryptionPID(uint8_t *msg, size_t msg_size, uint8_t *secret, size_t secret_length, uint8_t *AESIV, size_t AESIV_SIZE, uint8_t *tag, uint8_t *ciphertext, int *state);
+int encryption(uint8_t *msg, size_t msg_size, uint8_t *secret, size_t secret_length, uint8_t *AESIV, size_t AESIV_SIZE, uint8_t *tag, uint8_t *ciphertext, int *state);
+
+
+/**
+ * Uses AES-GCM encryption to encrypt a message into ciphertext using a secret key
+ * @param ciphertext The ciphertext you would like to decrypt
+ * @param ciphertext_size The size of the ciphertext message
+ * @param secret A secret key to use for encryption
+ * @param secret_length The size of the secret key
+ * @param AESIV An IV to use for encryption. A 12-byte IV is best (meets NIST standards)
+ * @param AESIV_SIZE The size of the IV used for encryption
+ * @param tag The buffer to hold the GCM authentication tag. All tags will be 16 bytes
+ * @param plaintext The buffer to hold the decrypted ciphertext (Will be the same size as the ciphertext)
+ * @return 1 on success
+*/
+int decryption(uint8_t *ciphertext, size_t ciphertext_size, uint8_t *secret, size_t secret_length, uint8_t *AESIV, size_t AESIV_SIZE, uint8_t *tag, uint8_t *plaintext);
 
 /**
  * A function to generate a random string as a OTP, and encrypt that OTP
