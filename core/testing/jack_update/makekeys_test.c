@@ -11,27 +11,12 @@
 #include "testing/crypto/ecc_testing.h"
 #include "crypto/rng_mbedtls.h"
 #include "crypto/base64_mbedtls.h"
-
+// #include "pit/pit.h"
 TEST_SUITE_LABEL ("makekeys");
 uint8_t AES_IV_TESTING[] = {
 	0x20,0x21,0x22,0x23,0x24,0x25,0x26,0x27,0x28,0x29,0x2a,0x2b
 };
 
-
-
-static void test_get_pub(CuTest *test){
-    TEST_START;
-    struct ecc_public_key mypub = ecc_keys_get_pub();
-    //printf("%x is test public key\n", (void *)mypub.context);
-    CuAssertPtrNotNull (test, mypub.context);
-}
-
-static void test_get_priv(CuTest *test){
-    TEST_START;
-    struct ecc_private_key mypriv = ecc_keys_get_priv();
-    //printf("%x is test private key\n", mypriv.context);
-    CuAssertPtrNotNull (test, mypriv.context);
-}
 
 static void test_lockstate(CuTest *test){
     TEST_START;
@@ -195,7 +180,7 @@ static void test_decryption(CuTest *test){
     uint8_t decrypted_msg[msg_length];
     status = decryption(ciphertext, sizeof(ciphertext), secret1, sizeof(secret1), AES_IV_TESTING, sizeof(AES_IV_TESTING), tag, decrypted_msg);
     CuAssertIntEquals(test, 1, status);
-    printf("Inside decryption test, decrypted msg is %s\n", decrypted_msg);
+    // printf("Inside decryption test, decrypted msg is %s\n", decrypted_msg);
     status = testing_validate_array (msg, decrypted_msg, sizeof(decrypted_msg));
     CuAssertIntEquals (test, 0, status);
     
@@ -375,10 +360,37 @@ static void test_unlock(CuTest *test){
 //     printf("%d", status);
 // }
 
+static void test_pit_lock(CuTest *test){
+    TEST_START;
+
+    uint8_t secret[32];
+    int status = lock(secret);
+    if(status != 0){
+        printf("Error");
+    }
+    int state = get_state();
+    CuAssertIntEquals(test, 0, state);
+}
+
+static void test_pit_unlock(CuTest *test){
+    TEST_START;
+
+    int status = unlock();
+    CuAssertIntEquals(test, 1, status);
+    int state = get_state();
+    CuAssertIntEquals(test, 7, state);
+}
+
+
+static void test_pit_get_OTPs(CuTest *test){
+    TEST_START;
+    uint8_t my_OTPs[128];
+    int status = get_OTPs(my_OTPs);
+    CuAssertIntEquals(test, 1, status);
+}
+
 
 TEST_SUITE_START (makekeys);
-TEST (test_get_pub);
-TEST (test_get_priv);
 TEST (test_lockstate);
 TEST (test_keygenstate);
 TEST (test_secretkey);
@@ -388,6 +400,9 @@ TEST (test_OTPgen);
 TEST (test_OTPvalidation);
 TEST (test_unlock);
 TEST (test_decryption);
+TEST (test_pit_lock);
+TEST (test_pit_unlock);
+TEST (test_pit_get_OTPs);
 
 // TEST (test_revamp);
 TEST_SUITE_END;

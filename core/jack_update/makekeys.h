@@ -11,12 +11,10 @@
 
 int ecc_keys();
 int pub_length();
-struct ecc_public_key ecc_keys_get_pub();
-struct ecc_private_key ecc_keys_get_priv();
-uint8_t * create_key_as_der();
 
 /**
  * Set the state to be locked
+ * Change to is_platform_locked?
  * @param state_check A String to be loaded with the current status of the state (This device is currently in lock state)
  * @param state An int to hold the numerical value of the state
  * @return 1 on success
@@ -36,7 +34,7 @@ int keygenstate(size_t key_length, struct ecc_private_key *privkey, struct ecc_p
 
 
 /**
- * Generates a secret key
+ * Generates a secret key - AES Shared Key
  * @param privkey The private key used to generate the secret
  * @param pubkey The public key used to generate the secret
  * @param secret An non-null output butter to hold the generated shared secret
@@ -77,7 +75,7 @@ int encryption(uint8_t *msg, size_t msg_size, uint8_t *secret, size_t secret_len
 int decryption(uint8_t *ciphertext, size_t ciphertext_size, uint8_t *secret, size_t secret_length, uint8_t *AESIV, size_t AESIV_SIZE, uint8_t *tag, uint8_t *plaintext);
 
 /**
- * A function to generate a random string as a OTP, and encrypt that OTP
+ * A function to generate a random string as a OTP, and encrypt that OTP (add more to description)
  * @param secret The secret key to encrypt the OTP with
  * @param secret_size The size of the secret key
  * @param AESIV An IV to use for encryption. A 12-byte IV is best (meets NIST standards)
@@ -115,3 +113,32 @@ int OTPvalidation(uint8_t * secret, size_t secret_size, uint8_t *AESIV, size_t A
  * @return 1 on success
 */
 int Unlock(bool *result, char **state_check, int *state);
+
+// int storesecret(uint* secret);
+
+// //Hey guys, I have a lab at 4 and unfortunately I have to leave - I can catch up with Rakesh 
+
+// int pit_init(uint** secret);
+
+
+/**
+ * Sets up needed variables and sets the machines state to lock
+ * @param secret A 32-byte empty array which will be loaded with the shared secret
+ * @return 1 on success
+*/
+int lock(uint8_t *secret);
+
+
+/**
+ * Unlocks the state of the machine by validating OTP
+ * @return 1 on success
+*/
+int unlock();
+
+/**
+ * @return The numerical value of the state of the system at the moment of calling
+*/
+int get_state();
+
+
+int get_OTPs(uint8_t *OTPs);
