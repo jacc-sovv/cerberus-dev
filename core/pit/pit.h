@@ -3,36 +3,34 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
-#include "crypto/ecc.h"
-#include "crypto/ecc_mbedtls.h"
-#include "crypto/aes_mbedtls.h"
-#include "mbedtls/pk.h"
-#include "mbedtls/ecp.h"
-#include "mbedtls/ecdh.h"
-#include "mbedtls/entropy.h"
-#include "mbedtls/ctr_drbg.h"
-#include "mbedtls/ecdh.h"
-#include "mbedtls/error.h"
-#include "crypto/rng_mbedtls.h"
 #include <stdbool.h>
 
-// // Sets 
-// // struct pit_engine {
-// // uint8_t *shared_secret;
-
-// // };
-
-// // Generates a secret key, sets state variables to lock
-int lock_name(uint8_t *secret, struct ecc_public_key *serv_pub_key);
-
-// //Calls OTP gen. Send encrypted OTPs to server. Server encrypts it again.
-// // Server sends back encrypted version of OTPs. User decrypts that. Should have OG OTPs back.
-// // Then call OTP validation on that
-// // int unlock(bool* valid);
-
-// // //Returns the current state
-// // int get_state(); 
+/**
+ * Sets up needed variables and sets the systems state to lock.
+ * Exchanges keys with the server to create a secret key
+ * @param secret A 32-byte empty array which will be loaded with the shared secret
+ * @return 1 on success
+*/
+int lock(uint8_t *secret);
 
 
-// // //Return encrypted OTP generated in the unlock state
-// // int get_encrypted_otps();
+/**
+ * Unlocks the state of the machine by validating OTP
+ * Creates an OTP, then encrypts it as OTPs. Sends OTPs to the server.
+ * Server then encrypts OTPs again, then sends it back to the client.
+ * Client decrypts server's message and validates OTPs against original OTP
+ * @return 1 on success
+*/
+int unlock();
+
+/** Gets the state of the system
+ * @return The numerical value of the state of the system at the moment of calling
+*/
+int get_state();
+
+/**
+ * Get the encrypted OTP (OTPs) from the system
+ * @param OTPs Empty buffer to hold the encrypted OTP into
+ * @return 1 on success
+*/
+int get_OTPs(uint8_t *OTPs);
