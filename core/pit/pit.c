@@ -15,6 +15,7 @@
 #include "mbedtls/ecdh.h"
 #include "mbedtls/error.h"
 #include "crypto/rng_mbedtls.h"
+#include "jack_update/makekeys.h"
 #include <stdbool.h>
 #include "pit/pit.h"
 #include <arpa/inet.h>
@@ -97,6 +98,7 @@ int lock(uint8_t *secret){
 }
 
 int unlock(){
+  int my_state;
   uint8_t unlock_aes_iv[] = {
 	0x20,0x21,0x22,0x23,0x24,0x25,0x26,0x27,0x28,0x29,0x2a,0x2b
   };

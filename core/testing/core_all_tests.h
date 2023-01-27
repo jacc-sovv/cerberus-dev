@@ -26,6 +26,7 @@
 #include "tpm/tpm_all_tests.h"
 #include "jack_update/makekeys_test.h"
 #include "leeann_edits_tests/tcpClient_tests.h"
+#include "pit_tests/pit_test.h"
 
 
 /**
@@ -37,8 +38,10 @@
  */
 void add_all_core_tests (CuSuite *suite)
 {
+	//add_all_test_tests (suite);
 	add_all_makekeys_tests (suite);
 	add_all_TCP_test (suite);
+	//add_all_pit_tests (suite);
 	add_all_attestation_tests (suite);
 	add_all_cmd_interface_tests (suite);
 	add_all_common_tests (suite);

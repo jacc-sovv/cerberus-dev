@@ -126,19 +126,19 @@ int Unlock(bool *result, char **state_check, int *state);
  * @param secret A 32-byte empty array which will be loaded with the shared secret
  * @return 1 on success
 */
-int lock(uint8_t *secret);
+// int lock(uint8_t *secret);
 
 
-/**
- * Unlocks the state of the machine by validating OTP
- * @return 1 on success
-*/
-int unlock();
+// /**
+//  * Unlocks the state of the machine by validating OTP
+//  * @return 1 on success
+// */
+// int unlock();
 
-/**
- * @return The numerical value of the state of the system at the moment of calling
-*/
-int get_state();
+// /**
+//  * @return The numerical value of the state of the system at the moment of calling
+// */
+// int get_state();
 
 
-int get_OTPs(uint8_t *OTPs);
+// int get_OTPs(uint8_t *OTPs);

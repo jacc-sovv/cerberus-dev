@@ -11,7 +11,8 @@
 #include "testing/crypto/ecc_testing.h"
 #include "crypto/rng_mbedtls.h"
 #include "crypto/base64_mbedtls.h"
-// #include "pit/pit.h"
+#include "pit/pit.h"
+
 TEST_SUITE_LABEL ("makekeys");
 uint8_t AES_IV_TESTING[] = {
 	0x20,0x21,0x22,0x23,0x24,0x25,0x26,0x27,0x28,0x29,0x2a,0x2b
@@ -390,6 +391,8 @@ static void test_pit_get_OTPs(CuTest *test){
 }
 
 
+
+
 TEST_SUITE_START (makekeys);
 TEST (test_lockstate);
 TEST (test_keygenstate);
@@ -403,6 +406,7 @@ TEST (test_decryption);
 TEST (test_pit_lock);
 TEST (test_pit_unlock);
 TEST (test_pit_get_OTPs);
+
 
 // TEST (test_revamp);
 TEST_SUITE_END;
