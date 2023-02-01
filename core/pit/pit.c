@@ -21,33 +21,10 @@
 #include <arpa/inet.h>
 
 
-uint8_t *shared_secret;
-int shared_length;
-struct ecc_private_key priv_key;
-struct ecc_public_key pub_key;
-uint8_t class_OTPs [128];
-int state;
-
-int lock(uint8_t *secret){
-
-    size_t keysize = (256 / 8);
-
-  int key_stat = keygenstate(keysize, &priv_key, &pub_key, &state);
-  if(key_stat != 1){
-    printf("Error in lock's keygen");
-  }
-
-    struct ecc_engine_mbedtls engine;
-    ecc_mbedtls_init (&engine);
-
-    shared_length = engine.base.get_shared_secret_max_length(&engine.base, &priv_key);
-    ecc_mbedtls_release(&engine);
-
-    shared_secret = malloc( 8 * shared_length);
-
-// Communicate w/ server, recv server's pub key
+int pit_connect(int desired_port){
+  // Communicate w/ server, (will be i2c in final version, must be overwritten)
   char* ip = "127.0.0.1";
-  int port = 5572;
+  int port = desired_port;
 
   int sock;
   struct sockaddr_in addr;
@@ -72,6 +49,38 @@ int lock(uint8_t *secret){
   }else{
   printf("Connected to the server.\n");
 
+}
+
+  return sock;
+}
+
+
+uint8_t *shared_secret;
+int shared_length;
+struct ecc_private_key priv_key;
+struct ecc_public_key pub_key;
+uint8_t class_OTPs [128];
+int state;
+
+int lock(uint8_t *secret){
+
+    size_t keysize = (256 / 8);
+
+  int key_stat = keygenstate(keysize, &priv_key, &pub_key, &state);
+  if(key_stat != 1){
+    printf("Error in lock's keygen");
+  }
+
+    struct ecc_engine_mbedtls engine;
+    ecc_mbedtls_init (&engine);
+
+    shared_length = engine.base.get_shared_secret_max_length(&engine.base, &priv_key);
+    ecc_mbedtls_release(&engine);
+
+    shared_secret = malloc( 8 * shared_length);
+
+
+  int sock = pit_connect(5572);
   ecc_mbedtls_init (&engine);
 
   int DER_LEN = 91;
@@ -93,8 +102,7 @@ int lock(uint8_t *secret){
   secretkey(&priv_key, &serv_pub_key, secret, &state);
   memcpy(shared_secret, secret, shared_length);
   state = 0;
-  }
-    return 0;
+  return 0;
 }
 
 int unlock(){
@@ -116,31 +124,7 @@ int unlock(){
 
 
   //Send OTPs to server
-  char* ip = "127.0.0.1";
-  int port = 5573;
-
-  int sock;
-  struct sockaddr_in addr;
-
-
-  sock = socket(AF_INET, SOCK_STREAM, 0);
-  if (sock < 0){
-    perror("[-] Socket error");
-    exit(1);
-  } else {
-  printf("[+] TCP server socket created.\n");
-  }
-
-  memset(&addr, 0, sizeof(addr));
-  addr.sin_family = AF_INET;
-  addr.sin_port = htons(port);
-  addr.sin_addr.s_addr = inet_addr(ip);
-
-  if (connect(sock, (struct sockaddr*)&addr, sizeof(addr)) != 0) {
-    printf("connection failed\n");
-    exit(0);
-  }
-  printf("Connected to the server.\n");
+  int sock = pit_connect(5573);
   send(sock, "kcol", sizeof("kcol"), 0);
   send(sock, shared_secret, shared_length, 0);
   send(sock, OTPs, sizeof(OTPs), 0);
