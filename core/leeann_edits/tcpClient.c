@@ -43,7 +43,7 @@ int tcp_client(){
   
 
   char* ip = "127.0.0.1";
-  int port = 5572;
+  int port = 5571;
 
   int sock;
   struct sockaddr_in addr;
@@ -63,7 +63,7 @@ int tcp_client(){
   addr.sin_addr.s_addr = inet_addr(ip);
 
   if (connect(sock, (struct sockaddr*)&addr, sizeof(addr)) != 0) {
-    printf("connection failed\n");
+    printf("connection failed in tcpClient.c \n");
     exit(0);
   }
   printf("Connected to the server.\n");
