@@ -5,29 +5,20 @@
 #include <stdbool.h>
 #include "platform.h"
 #include "testing.h"
-#include "jack_update/makekeys.h"
 #include "crypto/ecc.h"
 #include "crypto/ecc_mbedtls.h"
 #include "testing/crypto/ecc_testing.h"
 #include "crypto/rng_mbedtls.h"
 #include "crypto/base64_mbedtls.h"
 #include "pit/pit.h"
+#include "crypto/pit_crypto.h"
 
-TEST_SUITE_LABEL ("makekeys");
+TEST_SUITE_LABEL ("pit_crypto");
 uint8_t AES_IV_TESTING[] = {
 	0x20,0x21,0x22,0x23,0x24,0x25,0x26,0x27,0x28,0x29,0x2a,0x2b
 };
 
 
-static void test_lockstate(CuTest *test){
-    TEST_START;
-    char* state_check = "initial";
-    int state = -1;
-
-    int status = lockstate(&state_check, &state);
-    CuAssertIntEquals(test, 0, state);
-    CuAssertIntEquals(test, 1, status);
-}
 
 static void test_keygenstate(CuTest *test){
     TEST_START;
@@ -206,25 +197,6 @@ static void test_randomness(CuTest *test){
 	CuAssertTrue (test, (status != 0));
 	rng_mbedtls_release (&engine);
     
-    //buffer to b64
-    
-    // struct base64_engine_mbedtls engine2;
-    // int min_b64_len = (48 * 2);       //B64 encodes 4 bytes for every 3 bytes of the string
-	// uint8_t out[min_b64_len];
-    // printf("min length is %d\n", min_b64_len);
-
-	// memset (out, 0xff, sizeof (out));
-
-	// status = base64_mbedtls_init (&engine2);
-	// CuAssertIntEquals (test, 0, status);
-    // printf("test1\n");
-	// status = engine2.base.encode (&engine2.base, buffer, sizeof(buffer), out,
-	// 	sizeof (out));
-	// //CuAssertIntEquals (test, 0, status);
-    // printf("status is %d\n", status);
-    // printf("Base 64 encoded string has length %d and is %s\n", sizeof(out), out);
-
-	// base64_mbedtls_release (&engine2);
 }
 
 static void test_OTPgen(CuTest *test){
@@ -308,105 +280,16 @@ static void test_OTPvalidation(CuTest *test){
     CuAssertIntEquals(test, 1, status);
 }
 
-static void test_unlock(CuTest *test){
-    TEST_START;
-    size_t keysize = (256 / 8);
-    int state = -1;
-    struct ecc_private_key priv_key1;
-	struct ecc_public_key pub_key1;
-    struct ecc_private_key priv_key2;
-	struct ecc_public_key pub_key2;
-
-
-    struct ecc_engine_mbedtls engine;
-    ecc_mbedtls_init (&engine);
-
-
-
-    int status = keygenstate(keysize, &priv_key1, &pub_key1, &state);
-    CuAssertIntEquals(test, 1, status);
-
-    status = keygenstate(keysize, &priv_key2, &pub_key2, &state);
-    CuAssertIntEquals(test, 1, status);
-
-    int shared_length = engine.base.get_shared_secret_max_length(&engine.base, &priv_key2);
-    uint8_t secret[shared_length];
-
-    status = secretkey(&priv_key1, &pub_key2, secret, &state);
-    CuAssertIntEquals(test, 1, status);
-
-    size_t OTPsize = 32;
-    uint8_t tag[16];
-    uint8_t OTP[OTPsize];
-    uint8_t OTPs[OTPsize];
-    status = OTPgen(secret, sizeof(secret), AES_IV_TESTING, sizeof(AES_IV_TESTING), tag, OTP, OTPsize, OTPs, &state);
-    CuAssertPtrNotNull(test, OTPs);
-    CuAssertIntEquals(test, 1, status);
-    CuAssertIntEquals(test, 5, state);
-
-    bool result;
-    status = OTPvalidation(secret, sizeof(secret), AES_IV_TESTING, sizeof(AES_IV_TESTING), tag, OTPs, sizeof(OTPs), OTP, &result, &state);
-
-    char* state_check = "initial";
-    state = -1;
-
-    status = Unlock(&result, &state_check, &state);
-    CuAssertIntEquals(test, 7, state);
-    CuAssertIntEquals(test, 1, status);
-}
-
-// static void test_revamp(CuTest *test){
-//     TEST_START;
-//     int status = revamp();
-//     printf("%d", status);
-// }
-
-static void test_pit_lock(CuTest *test){
-    TEST_START;
-
-    uint8_t secret[32];
-    int status = lock(secret);
-    if(status != 0){
-        printf("Error");
-    }
-    int state = get_state();
-    CuAssertIntEquals(test, 0, state);
-}
-
-static void test_pit_unlock(CuTest *test){
-    TEST_START;
-
-    int status = unlock();
-    CuAssertIntEquals(test, 1, status);
-    int state = get_state();
-    CuAssertIntEquals(test, 7, state);
-}
-
-
-static void test_pit_get_OTPs(CuTest *test){
-    TEST_START;
-    uint8_t my_OTPs[128];
-    int status = get_OTPs(my_OTPs);
-    CuAssertIntEquals(test, 1, status);
-}
 
 
 
 
-TEST_SUITE_START (makekeys);
-TEST (test_lockstate);
+TEST_SUITE_START (pit_crypto);
 TEST (test_keygenstate);
 TEST (test_secretkey);
 TEST (test_encryptionPID);
 TEST (test_randomness);
 TEST (test_OTPgen);
 TEST (test_OTPvalidation);
-TEST (test_unlock);
 TEST (test_decryption);
-TEST (test_pit_lock);
-TEST (test_pit_unlock);
-TEST (test_pit_get_OTPs);
-
-
-// TEST (test_revamp);
 TEST_SUITE_END;

@@ -15,7 +15,7 @@
 #include "mbedtls/ecdh.h"
 #include "mbedtls/error.h"
 #include "crypto/rng_mbedtls.h"
-#include "jack_update/makekeys.h"
+#include "crypto/pit_crypto.h"
 #include <stdbool.h>
 #include "pit/pit.h"
 #include <arpa/inet.h>
@@ -89,11 +89,11 @@ int lock(uint8_t *secret){
   engine.base.get_public_key_der (&engine.base, &pub_key, &pub_der, &der_length);
 
   send(sock, "lock", sizeof("lock"), 0);
-  send(sock, pub_der, der_length, 0); //Will always be length 91 for this curve
+  send(sock, pub_der, der_length, 0); //Will always be length 91 for this curve, send client public key
 
   uint8_t buffer[DER_LEN];
   bzero(buffer, DER_LEN);
-  recv(sock, buffer, DER_LEN, 0);
+  recv(sock, buffer, DER_LEN, 0); //Receive the server's public key
   struct ecc_public_key serv_pub_key;
 
   //Initialize a public key that we can use inside of cerberus from the server's DER encoded public key
@@ -125,7 +125,7 @@ int unlock(){
 
   //Send OTPs to server
   int sock = pit_connect(5573);
-  send(sock, "kcol", sizeof("kcol"), 0);
+  send(sock, "kcol", sizeof("kcol"), 0);  //So the server knows the unlock ("lock" is key for lock, "kcol" key for unlock to keep everything 4 bytes)
   send(sock, shared_secret, shared_length, 0);
   send(sock, OTPs, sizeof(OTPs), 0);
   send(sock, unlock_aes_iv, sizeof(unlock_aes_iv), 0);
@@ -153,9 +153,6 @@ int unlock(){
     state = 7; 
   }
   return isValid;
-  
-  //Server encrypts OTPs, sends it back
-  //We decrypt that, and validate it against our generated OTP
 
 }
 

@@ -29,6 +29,7 @@ static void test_pit_unlock(CuTest *test){
     CuAssertIntEquals(test, 1, status);
     int state = get_state();
     CuAssertIntEquals(test, 7, state);
+    exit(20);
 }
 
 
