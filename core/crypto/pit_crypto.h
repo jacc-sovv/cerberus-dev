@@ -9,18 +9,6 @@
 #include "testing/crypto/ecc_testing.h"
 #include "mbedtls/ecdh.h"
 
-int ecc_keys();
-int pub_length();
-
-/**
- * Set the state to be locked
- * Change to is_platform_locked?
- * @param state_check A String to be loaded with the current status of the state (This device is currently in lock state)
- * @param state An int to hold the numerical value of the state
- * @return 1 on success
-*/
-int lockstate(char** state_check, int *state);
-
 /**
  * Generates a key pair, sets the state appropriately
  * @param key_length The length of key to use in bytes. 256, 381, 521 bits (so X / 8 bytes) are the supported lengths
@@ -104,41 +92,3 @@ int OTPgen(uint8_t *secret,  size_t secret_size, uint8_t *AESIV, size_t AESIV_SI
  * @return 1 on success
 */
 int OTPvalidation(uint8_t * secret, size_t secret_size, uint8_t *AESIV, size_t AESIV_SIZE, uint8_t *tag, uint8_t *OTPs, size_t OTPs_size, uint8_t *valOTP, bool *result, int *state);
-
-/**
- * Unlocks the device and sets the state appropriately
- * @param result A value containing the result of the unlock attempt
- * @param state_check A String to be loaded with the current status of the state (This device is currently in unlock state)
- * @param state An int to hold the numerical value of the state
- * @return 1 on success
-*/
-int Unlock(bool *result, char **state_check, int *state);
-
-// int storesecret(uint* secret);
-
-// //Hey guys, I have a lab at 4 and unfortunately I have to leave - I can catch up with Rakesh 
-
-// int pit_init(uint** secret);
-
-
-/**
- * Sets up needed variables and sets the machines state to lock
- * @param secret A 32-byte empty array which will be loaded with the shared secret
- * @return 1 on success
-*/
-// int lock(uint8_t *secret);
-
-
-// /**
-//  * Unlocks the state of the machine by validating OTP
-//  * @return 1 on success
-// */
-// int unlock();
-
-// /**
-//  * @return The numerical value of the state of the system at the moment of calling
-// */
-// int get_state();
-
-
-// int get_OTPs(uint8_t *OTPs);
