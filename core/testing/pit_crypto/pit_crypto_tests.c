@@ -36,6 +36,23 @@ static void test_keygenstate(CuTest *test){
 
 }
 
+// static void test_keyexchangesstate(CuTest *test){
+//     TEST_START;
+//     struct ecc_private_key priv_key;
+// 	struct ecc_public_key pub_key;
+//     struct ecc_public_key pub_key_server;
+//     size_t keysize = (256 / 8);
+//     int state = -1;
+
+//     keygenstate(keysize, &priv_key, &pub_key, &state);
+//     CuAssertPtrNotNull(test, pub_key.context);
+//     CuAssertPtrNotNull(test, priv_key.context);
+    
+
+//     keyexchangestate(&pub_key, &pub_key_server);
+//     CuAssertPtrNotNull(test, pub_key_server.context);
+// }
+
 
 static void test_secretkey(CuTest *test){
     TEST_START;
@@ -221,6 +238,7 @@ static void test_OTPgen(CuTest *test){
     CuAssertIntEquals(test, 1, status);
 
     int shared_length = engine.base.get_shared_secret_max_length(&engine.base, &priv_key2);
+    ecc_mbedtls_release (&engine);
     uint8_t secret[shared_length];
 
     status = secretkey(&priv_key1, &pub_key2, secret, &state);
@@ -258,6 +276,7 @@ static void test_OTPvalidation(CuTest *test){
     CuAssertIntEquals(test, 1, status);
 
     int shared_length = engine.base.get_shared_secret_max_length(&engine.base, &priv_key2);
+    ecc_mbedtls_release (&engine);
     uint8_t secret[shared_length];
 
     status = secretkey(&priv_key1, &pub_key2, secret, &state);
@@ -286,6 +305,7 @@ static void test_OTPvalidation(CuTest *test){
 
 TEST_SUITE_START (pit_crypto);
 TEST (test_keygenstate);
+//TEST (test_keyexchangesstate);
 TEST (test_secretkey);
 TEST (test_encryptionPID);
 TEST (test_randomness);

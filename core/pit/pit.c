@@ -6,8 +6,6 @@
 #include "crypto/ecc.h"
 #include "crypto/ecc_mbedtls.h"
 #include "crypto/aes_mbedtls.h"
-#include "mbedtls/pk.h"
-#include "testing/crypto/ecc_testing.h"
 #include "mbedtls/ecp.h"
 #include "mbedtls/ecdh.h"
 #include "mbedtls/entropy.h"
@@ -19,40 +17,7 @@
 #include <stdbool.h>
 #include "pit/pit.h"
 #include <arpa/inet.h>
-
-
-int pit_connect(int desired_port){
-  // Communicate w/ server, (will be i2c in final version, must be overwritten)
-  char* ip = "127.0.0.1";
-  int port = desired_port;
-
-  int sock;
-  struct sockaddr_in addr;
-
-
-  sock = socket(AF_INET, SOCK_STREAM, 0);
-  if (sock < 0){
-    perror("[-] Socket error");
-    exit(1);
-  } else {
-  printf("[+] TCP server socket created.\n");
-  }
-
-  memset(&addr, 0, sizeof(addr));
-  addr.sin_family = AF_INET;
-  addr.sin_port = htons(port);
-  addr.sin_addr.s_addr = inet_addr(ip);
-
-  if (connect(sock, (struct sockaddr*)&addr, sizeof(addr)) != 0) {
-    printf("connection failed\n");
-    exit(0);
-  }else{
-  printf("Connected to the server.\n");
-
-}
-
-  return sock;
-}
+#include "i2c/pit_i2c.h"
 
 
 uint8_t *shared_secret;
@@ -64,42 +29,31 @@ int state;
 
 int lock(uint8_t *secret){
 
-    size_t keysize = (256 / 8);
+  size_t keysize = (256 / 8);
 
   int key_stat = keygenstate(keysize, &priv_key, &pub_key, &state);
   if(key_stat != 1){
     printf("Error in lock's keygen");
   }
 
-    struct ecc_engine_mbedtls engine;
-    ecc_mbedtls_init (&engine);
-
-    shared_length = engine.base.get_shared_secret_max_length(&engine.base, &priv_key);
-    ecc_mbedtls_release(&engine);
-
-    shared_secret = malloc( 8 * shared_length);
-
-
-  int sock = pit_connect(5572);
+  struct ecc_engine_mbedtls engine;
   ecc_mbedtls_init (&engine);
+  struct ecc_public_key pub_key_serv;
+  shared_length = engine.base.get_shared_secret_max_length(&engine.base, &priv_key);
+  shared_secret = malloc( 8 * shared_length);
 
-  int DER_LEN = 91;
   uint8_t *pub_der = NULL;
   size_t der_length;
   engine.base.get_public_key_der (&engine.base, &pub_key, &pub_der, &der_length);
 
-  send(sock, "lock", sizeof("lock"), 0);
-  send(sock, pub_der, der_length, 0); //Will always be length 91 for this curve, send client public key
+  uint8_t buffer[der_length];
+  bzero(buffer, der_length);
 
-  uint8_t buffer[DER_LEN];
-  bzero(buffer, DER_LEN);
-  recv(sock, buffer, DER_LEN, 0); //Receive the server's public key
-  struct ecc_public_key serv_pub_key;
-
-  //Initialize a public key that we can use inside of cerberus from the server's DER encoded public key
-  engine.base.init_public_key(&engine.base, buffer, DER_LEN, &serv_pub_key);
-
-  secretkey(&priv_key, &serv_pub_key, secret, &state);
+  keyexchangestate(pub_der, der_length, buffer);
+  
+  engine.base.init_public_key(&engine.base, buffer, der_length, &pub_key_serv);
+  ecc_mbedtls_release (&engine);
+  secretkey(&priv_key, &pub_key_serv, secret, &state);
   memcpy(shared_secret, secret, shared_length);
   state = 0;
   return 0;
@@ -124,12 +78,9 @@ int unlock(){
 
 
   //Send OTPs to server
-  int sock = pit_connect(5573);
-  send(sock, "kcol", sizeof("kcol"), 0);  //So the server knows the unlock ("lock" is key for lock, "kcol" key for unlock to keep everything 4 bytes)
-  send(sock, shared_secret, shared_length, 0);
-  send(sock, OTPs, sizeof(OTPs), 0);
-  send(sock, unlock_aes_iv, sizeof(unlock_aes_iv), 0);
-  send(sock, OTP_tag, sizeof(OTP_tag), 0);
+  uint8_t serv_enc[128];
+  uint8_t server_tag[16];
+  send_unlock_info(OTPs, sizeof(OTPs), unlock_aes_iv, sizeof(unlock_aes_iv), OTP_tag, serv_enc, server_tag);
   printf("Sending OTPs to server...\n");
 
   printf("[DEMO(1)]: Decrypting OTP to showcase it is the same on the client and server. Original OTP is \n", OTP);
@@ -138,11 +89,8 @@ int unlock(){
   }
   printf("\n\n");
 
-  uint8_t serv_enc[128];
-  uint8_t server_tag[16];
-  bzero(serv_enc, 128);
-  recv(sock, serv_enc, 128, 0);
-  recv(sock, server_tag, sizeof(server_tag), 0);
+
+
   printf("[DEMO(4)]: Receiving OTPs from user...\n");
   printf("[DEMO(4)]: Validating OTPs...\n");
   bool isValid = false;
@@ -151,6 +99,7 @@ int unlock(){
   printf("[DEMO(5)]: Is OTP valid? 0 represents not valid, 1 represents valid : %d\n", isValid);
   if(isValid){
     state = 7; 
+
   }
   return isValid;
 

@@ -20,7 +20,6 @@
 int keygenstate(size_t key_length, struct ecc_private_key *privkey, struct ecc_public_key *pubkey, int *state);
 
 
-
 /**
  * Generates a secret key - AES Shared Key
  * @param privkey The private key used to generate the secret

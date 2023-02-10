@@ -18,6 +18,7 @@
 #include <stdbool.h>
 #include "pit/pit.h"
 #include <arpa/inet.h>
+#include "i2c/pit_i2c.h"
 
 
 int keygenstate(size_t key_length, struct ecc_private_key *privkey, struct ecc_public_key *pubkey, int *state){
@@ -26,26 +27,17 @@ int keygenstate(size_t key_length, struct ecc_private_key *privkey, struct ecc_p
   ecc_mbedtls_init (&engine);
   int status = engine.base.generate_key_pair (&engine.base, key_length, privkey, pubkey);
   
-  //BONUS TESTS TO BE SURE A KEY REALLY GETS GENERATED (NOT THAT IT'S NECESSARILY CORRECT)
-    // uint8_t *pub_der = NULL;
-    // size_t der_length;
-    // int success = engine.base.get_public_key_der (&engine.base, pubkey, &pub_der, &der_length);
-    // printf("Was writing into der format successfull? 0 indicates success : %d\n", success);
-    // printf("Pub der has leng of %d and is %s\n", der_length, pub_der);
-    
-    // uint8_t *priv_der = NULL;
-    // success = engine.base.get_private_key_der(&engine.base, privkey, &priv_der, &der_length);
-    // printf("Was writing into der format successfull? 0 indicates success : %d\n", success);
-    // printf("Pub der has leng of %d and is %s\n", der_length, priv_der);
-  
   *state = 1;
+  ecc_mbedtls_release (&engine);
   if(status == 0){
     return 1;
   }
   else{
     return -1;
   }
+  
 }
+
 
 
 int secretkey(struct ecc_private_key *privkey, struct ecc_public_key *pubkey, uint8_t *secret, int *state){
@@ -54,10 +46,8 @@ int secretkey(struct ecc_private_key *privkey, struct ecc_public_key *pubkey, ui
   int shared_length = engine.base.get_shared_secret_max_length(&engine.base, privkey);
   uint8_t out[shared_length];
   engine.base.compute_shared_secret (&engine.base, privkey, pubkey, out, sizeof (out));
+  ecc_mbedtls_release (&engine);
 
-  // for(int i = 0; i < shared_length; i++){
-  //   secret[i] = out[i];
-  // }
   memcpy(secret, out, shared_length);
 
   *state = 3;
@@ -97,7 +87,7 @@ int OTPgen(uint8_t *secret,  size_t secret_size, uint8_t *AESIV, size_t aesiv_si
 
   if(status != 0){
     printf("RNG engine failed!\n");
-    exit(20);
+
   }
 status = encryption(OTP, OTPsize, secret, secret_size, AESIV, aesiv_size, tag, OTPs, state);
 
