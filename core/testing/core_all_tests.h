@@ -37,9 +37,7 @@
  */
 void add_all_core_tests (CuSuite *suite)
 {
-	//add_all_test_tests (suite);
 	add_all_pit_crypto_tests (suite);
-	//add_all_TCP_test (suite);
 	add_all_pit_tests (suite);
 	add_all_attestation_tests (suite);
 	add_all_cmd_interface_tests (suite);

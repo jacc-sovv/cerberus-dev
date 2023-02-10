@@ -41,7 +41,18 @@ int lock(uint8_t *secret){
   struct ecc_public_key pub_key_serv;
   shared_length = engine.base.get_shared_secret_max_length(&engine.base, &priv_key);
   shared_secret = malloc( 8 * shared_length);
-  keyexchangestate(&pub_key, &pub_key_serv);
+
+  uint8_t *pub_der = NULL;
+  size_t der_length;
+  engine.base.get_public_key_der (&engine.base, &pub_key, &pub_der, &der_length);
+
+  uint8_t buffer[der_length];
+  bzero(buffer, der_length);
+
+  keyexchangestate(pub_der, der_length, buffer);
+  
+  engine.base.init_public_key(&engine.base, buffer, der_length, &pub_key_serv);
+  ecc_mbedtls_release (&engine);
   secretkey(&priv_key, &pub_key_serv, secret, &state);
   memcpy(shared_secret, secret, shared_length);
   state = 0;
@@ -88,7 +99,7 @@ int unlock(){
   printf("[DEMO(5)]: Is OTP valid? 0 represents not valid, 1 represents valid : %d\n", isValid);
   if(isValid){
     state = 7; 
-    exit(20);
+
   }
   return isValid;
 

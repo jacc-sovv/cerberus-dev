@@ -15,7 +15,7 @@ int pit_connect(int desired_port);
  * @param pubkey_serv An uninitialized public key to store the server's public key into
  * @return 1 on success
 */
-int keyexchangestate(struct ecc_public_key *pubkey_cli, struct ecc_public_key *pubkey_serv);
+int keyexchangestate(uint8_t *pubkey_cli, size_t pubkey_der_length, uint8_t *pubkey_serv);
 
 
 /**

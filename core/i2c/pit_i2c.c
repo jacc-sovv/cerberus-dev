@@ -41,24 +41,13 @@ int pit_connect(int desired_port){
 
 
 //May need to override depending on how pit_connect is implemented
-int keyexchangestate(struct ecc_public_key *pubkey_cli, struct ecc_public_key *pubkey_serv){
+int keyexchangestate(uint8_t *pubkey_cli, size_t pubkey_der_length, uint8_t *pubkey_serv){
   int sock = pit_connect(5572);
-  struct ecc_engine_mbedtls engine;
-  ecc_mbedtls_init (&engine);
 
-  int DER_LEN = 91;
-  uint8_t *pub_der = NULL;
-  size_t der_length;
-  engine.base.get_public_key_der (&engine.base, pubkey_cli, &pub_der, &der_length);
+  send(sock, pubkey_cli, pubkey_der_length, 0); //Will always be length 91 for this curve, send client public key (DER Format)
 
-  send(sock, "lock", sizeof("lock"), 0);
-  send(sock, pub_der, der_length, 0); //Will always be length 91 for this curve, send client public key (DER Format)
-  
-  uint8_t buffer[DER_LEN];
-  bzero(buffer, DER_LEN);
-  recv(sock, buffer, DER_LEN, 0); //Receive the server's public key (DER Format)
-  engine.base.init_public_key(&engine.base, buffer, DER_LEN, pubkey_serv);
-  //ecc_mbedtls_release (&engine);
+  recv(sock, pubkey_serv, pubkey_der_length, 0); //Receive the server's public key (DER Format)
+
   return 1;
 }
 

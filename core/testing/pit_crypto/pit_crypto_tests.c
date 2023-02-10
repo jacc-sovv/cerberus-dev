@@ -238,7 +238,7 @@ static void test_OTPgen(CuTest *test){
     CuAssertIntEquals(test, 1, status);
 
     int shared_length = engine.base.get_shared_secret_max_length(&engine.base, &priv_key2);
-    //ecc_mbedtls_release (&engine);
+    ecc_mbedtls_release (&engine);
     uint8_t secret[shared_length];
 
     status = secretkey(&priv_key1, &pub_key2, secret, &state);
