@@ -18,7 +18,7 @@
 #include <stdbool.h>
 #include "pit/pit.h"
 #include <arpa/inet.h>
-#include "pit_i2c/pit_i2c.h"
+#include "i2c/pit_i2c.h"
 
 
 int keygenstate(size_t key_length, struct ecc_private_key *privkey, struct ecc_public_key *pubkey, int *state){

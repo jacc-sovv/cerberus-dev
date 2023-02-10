@@ -17,7 +17,7 @@
 #include <stdbool.h>
 #include "pit/pit.h"
 #include <arpa/inet.h>
-#include "pit_i2c/pit_i2c.h"
+#include "i2c/pit_i2c.h"
 
 
 uint8_t *shared_secret;

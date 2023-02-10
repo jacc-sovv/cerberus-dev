@@ -1,5 +1,5 @@
 #include <arpa/inet.h>
-#include "pit_i2c/pit_i2c.h"
+#include "i2c/pit_i2c.h"
 #include "crypto/ecc_mbedtls.h"
 #include "mbedtls/ecdh.h"
 #include <string.h>
