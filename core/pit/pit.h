@@ -13,7 +13,6 @@
 */
 int lock(uint8_t *secret);
 
-
 /**
  * Unlocks the state of the machine by validating OTP
  * Creates an OTP, then encrypts it as OTPs. Sends OTPs to the server.
