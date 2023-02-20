@@ -24,7 +24,7 @@ int keygenstate(size_t key_length, struct ecc_private_key *privkey, struct ecc_p
  * Generates a secret key - AES Shared Key
  * @param privkey The private key used to generate the secret
  * @param pubkey The public key used to generate the secret
- * @param secret An non-null output butter to hold the generated shared secret
+ * @param secret An non-null output buffer to hold the generated shared secret
  * @param state An int to hold the numerical value of the state
  * @return 1 on success
 */
@@ -40,7 +40,7 @@ int secretkey(struct ecc_private_key *privkey, struct ecc_public_key *pubkey, ui
  * @param AESIV An IV to use for encryption. A 12-byte IV is best (meets NIST standards)
  * @param AESIV_SIZE The size of the IV used for encryption
  * @param tag The buffer to hold the GCM authentication tag. All tags will be 16 bytes
- * @param ciphertext The buffer to hold the encrypted data. The ciphertext will be the same length as the plaintext
+ * @param ciphertext An empty output buffer to hold the encrypted data. The ciphertext will be the same length as the plaintext
  * @param state An int to hold the numerical value of the state
  * @return 1 on success
 */
@@ -67,8 +67,8 @@ int decryption(uint8_t *ciphertext, size_t ciphertext_size, uint8_t *secret, siz
  * @param secret_size The size of the secret key
  * @param AESIV An IV to use for encryption. A 12-byte IV is best (meets NIST standards)
  * @param AESIV_SIZE The size of the IV used for encryption
- * @param tag The initialized but empty buffer to hold the GCM authentication tag. All tags will be 16 bytes
- * @param OTP An initialized but empty buffer to hold a randomly generated OTP into
+ * @param tag The output buffer to hold the GCM authentication tag. All tags will be 16 bytes
+ * @param OTP An output buffer to hold a randomly generated OTP into
  * @param OTPSize The size the randomly generated OTP should be
  * @param OTPs An initialized but empty buffer to hold the encrypted OTP in (OTPs and OTP will be the same size)
  * @param state An int to hold the numerical value of the state
