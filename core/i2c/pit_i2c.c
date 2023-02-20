@@ -7,7 +7,7 @@
 #include <stdio.h>
 
 int pit_connect(int desired_port){
-  // Communicate w/ server, (will be i2c in final version, must be overwritten)
+  // Communicate w/ server, (will be i2c in final version, must be overwritten) (expand on this)
   char* ip = "127.0.0.1";
   int port = desired_port;
 

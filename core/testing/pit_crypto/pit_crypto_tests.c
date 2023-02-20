@@ -187,7 +187,7 @@ static void test_decryption(CuTest *test){
     status = encryption(msg, msg_length, secret1, sizeof(secret1), AES_IV_TESTING, sizeof(AES_IV_TESTING), tag, ciphertext, &state);
     
     uint8_t decrypted_msg[msg_length];
-    status = decryption(ciphertext, sizeof(ciphertext), secret1, sizeof(secret1), AES_IV_TESTING, sizeof(AES_IV_TESTING), tag, decrypted_msg);
+    status = decryption(ciphertext, sizeof(ciphertext), secret1, sizeof(secret1), AES_IV_TESTING, sizeof(AES_IV_TESTING), tag, decrypted_msg, &state);
     CuAssertIntEquals(test, 1, status);
     // printf("Inside decryption test, decrypted msg is %s\n", decrypted_msg);
     status = testing_validate_array (msg, decrypted_msg, sizeof(decrypted_msg));
@@ -251,7 +251,7 @@ static void test_OTPgen(CuTest *test){
     status = OTPgen(secret, sizeof(secret), AES_IV_TESTING, sizeof(AES_IV_TESTING), tag, OTP, OTPsize, OTPs, &state);
     CuAssertPtrNotNull(test, OTPs);
     CuAssertIntEquals(test, 1, status);
-    CuAssertIntEquals(test, 5, state);
+    CuAssertIntEquals(test, 6, state);
 }
 
 static void test_OTPvalidation(CuTest *test){
@@ -289,13 +289,13 @@ static void test_OTPvalidation(CuTest *test){
     status = OTPgen(secret, sizeof(secret), AES_IV_TESTING, sizeof(AES_IV_TESTING), tag, OTP, OTPsize, OTPs, &state);
     CuAssertPtrNotNull(test, OTPs);
     CuAssertIntEquals(test, 1, status);
-    CuAssertIntEquals(test, 5, state);
+    CuAssertIntEquals(test, 6, state);
 
     bool result;
     status = OTPvalidation(secret, sizeof(secret), AES_IV_TESTING, sizeof(AES_IV_TESTING), tag, OTPs, sizeof(OTPs), OTP, &result, &state);
 
     CuAssertIntEquals(test, 1, result);
-    CuAssertIntEquals(test, 6, state);
+    CuAssertIntEquals(test, 7, state);
     CuAssertIntEquals(test, 1, status);
 }
 
@@ -305,7 +305,6 @@ static void test_OTPvalidation(CuTest *test){
 
 TEST_SUITE_START (pit_crypto);
 TEST (test_keygenstate);
-//TEST (test_keyexchangesstate);
 TEST (test_secretkey);
 TEST (test_encryptionPID);
 TEST (test_randomness);
