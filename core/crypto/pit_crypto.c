@@ -69,13 +69,14 @@ int encryption(uint8_t *msg, size_t msg_size, uint8_t *secret, size_t secret_len
 
 }
 
-int decryption(uint8_t *ciphertext, size_t ciphertext_size, uint8_t *secret, size_t secret_length, uint8_t *AESIV, size_t AESIV_SIZE, uint8_t *tag, uint8_t *plaintext){
+int decryption(uint8_t *ciphertext, size_t ciphertext_size, uint8_t *secret, size_t secret_length, uint8_t *AESIV, size_t AESIV_SIZE, uint8_t *tag, uint8_t *plaintext, int *state){
   struct aes_engine_mbedtls aes_engine;	
   aes_mbedtls_init (&aes_engine);
   aes_engine.base.set_key (&aes_engine.base, secret, secret_length);
 
   int stat = aes_engine.base.decrypt_data (&aes_engine.base, ciphertext, ciphertext_size,
 		tag, AESIV, AESIV_SIZE, plaintext, ciphertext_size);
+  *state = 5;
   return stat + 1;
 }
 
@@ -91,7 +92,7 @@ int OTPgen(uint8_t *secret,  size_t secret_size, uint8_t *AESIV, size_t aesiv_si
   }
 status = encryption(OTP, OTPsize, secret, secret_size, AESIV, aesiv_size, tag, OTPs, state);
 
-*state = 5;
+*state = 6;
 return status;
 }
 
@@ -116,6 +117,6 @@ int OTPvalidation(uint8_t * secret, size_t secret_size, uint8_t *AESIV, size_t A
   }
 
   *result = flag;
-  *state = 6;
+  *state = 7;
   return stat + 1;
 }

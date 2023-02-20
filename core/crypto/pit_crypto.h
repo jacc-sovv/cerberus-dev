@@ -48,7 +48,7 @@ int encryption(uint8_t *msg, size_t msg_size, uint8_t *secret, size_t secret_len
 
 
 /**
- * Uses AES-GCM encryption to encrypt a message into ciphertext using a secret key
+ * Uses AES-GCM encryption to decrypt a message from ciphertext using a secret key
  * @param ciphertext The ciphertext you would like to decrypt
  * @param ciphertext_size The size of the ciphertext message
  * @param secret A secret key to use for encryption
@@ -59,32 +59,32 @@ int encryption(uint8_t *msg, size_t msg_size, uint8_t *secret, size_t secret_len
  * @param plaintext The buffer to hold the decrypted ciphertext (Will be the same size as the ciphertext)
  * @return 1 on success
 */
-int decryption(uint8_t *ciphertext, size_t ciphertext_size, uint8_t *secret, size_t secret_length, uint8_t *AESIV, size_t AESIV_SIZE, uint8_t *tag, uint8_t *plaintext);
+int decryption(uint8_t *ciphertext, size_t ciphertext_size, uint8_t *secret, size_t secret_length, uint8_t *AESIV, size_t AESIV_SIZE, uint8_t *tag, uint8_t *plaintext, int *state);
 
 /**
- * A function to generate a random string as a OTP, and encrypt that OTP (add more to description)
+ * A function to generate a random string representing OTP. Additionally, this function will encrypt that OTP using AES-GCM encryption, using the secret key for the AES encryption.
  * @param secret The secret key to encrypt the OTP with
  * @param secret_size The size of the secret key
  * @param AESIV An IV to use for encryption. A 12-byte IV is best (meets NIST standards)
  * @param AESIV_SIZE The size of the IV used for encryption
- * @param tag The buffer to hold the GCM authentication tag. All tags will be 16 bytes
- * @param OTP A buffer to hold a randomly generated OTP into
- * @param OTPSize The size the OTP should be
- * @param OTPs A buffer to hold the encrypted OTP in
+ * @param tag The initialized but empty buffer to hold the GCM authentication tag. All tags will be 16 bytes
+ * @param OTP An initialized but empty buffer to hold a randomly generated OTP into
+ * @param OTPSize The size the randomly generated OTP should be
+ * @param OTPs An initialized but empty buffer to hold the encrypted OTP in (OTPs and OTP will be the same size)
  * @param state An int to hold the numerical value of the state
  * @return 1 on success
 */
 int OTPgen(uint8_t *secret,  size_t secret_size, uint8_t *AESIV, size_t AESIV_SIZE, uint8_t *tag, uint8_t *OTP, size_t OTPSize, uint8_t *OTPs, int *state);
 
 /**
- * Decrypts an encrypted OTP and compares it to a 
+ * Decrypts an encrypted OTP and compares it to a valid version of the OTP. If the OTP decrypts successfully and matches the valid OTP, the result parameter contains true.
  * @param secret The secret key used to decrypt OTPs
  * @param secret_size The size of the secret key
  * @param AESIV An IV to use for decryption. Must be the same as the IV provided to encrypt
  * @param AESIV_SIZE The size of the IV used for encryption
- * @param tag The GCM tag for ciphertext
- * @param OTPs Encrypted OTP to be decrypted
- * @param OTPs_size The size of the encrypted OTP
+ * @param tag The AES-GCM tag for the ciphertext
+ * @param OTPs A full buffer holding the value for OTPs (an encrypted OTP to validate against)
+ * @param OTPs_size The size of OTPs
  * @param valOTP OTP to be validated against the decrypted OTP
  * @param result A boolean value to check whether the OTP was successfully validated
  * @param An int to hold the numerical value of the state
