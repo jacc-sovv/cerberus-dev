@@ -30,3 +30,6 @@ int keyexchangestate(uint8_t *pubkey_cli, size_t pubkey_der_length, uint8_t *pub
  * @return 1 on success
 */
 int send_unlock_info(uint8_t *OTPs, size_t OTPs_size, uint8_t *unlock_aes_iv, size_t unlock_aes_iv_size, uint8_t *OTP_tag, uint8_t *server_encrypted_message, uint8_t *server_tag);
+
+
+int receive_product_info(uint8_t *EncryptedProductID, uint8_t *EncryptedProductIDTag, size_t ProductIDSize, uint8_t *aes_iv, size_t aes_iv_size);
