@@ -85,12 +85,7 @@ int OTPgen(uint8_t *secret,  size_t secret_size, uint8_t *AESIV, size_t aesiv_si
 	int status;
 	status = rng_mbedtls_init (&engine);
 	status = engine.base.generate_random_buffer (&engine.base, OTPsize, OTP);
-
-  if(status != 0){
-    printf("RNG engine failed!\n");
-
-  }
-status = encryption(OTP, OTPsize, secret, secret_size, AESIV, aesiv_size, tag, OTPs, state);
+  status = encryption(OTP, OTPsize, secret, secret_size, AESIV, aesiv_size, tag, OTPs, state);
 
 *state = 6;
 return status;
@@ -111,7 +106,7 @@ int OTPvalidation(uint8_t * secret, size_t secret_size, uint8_t *AESIV, size_t A
 
   for(int i = 0; i < (int)OTPs_size; i++){
     if(plaintext[i] != valOTP[i]){
-      printf("Issue at %d of comparison\n", i);
+      
       flag = false;
     }
   }
