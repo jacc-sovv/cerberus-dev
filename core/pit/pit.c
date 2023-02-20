@@ -68,35 +68,25 @@ int unlock(){
   uint8_t OTP_tag[16];
   uint8_t OTP[otp_size];
   uint8_t OTPs[otp_size];
-  printf("Client generating OTP...\n");
   int status = OTPgen(shared_secret, shared_length, unlock_aes_iv, sizeof(unlock_aes_iv), OTP_tag, OTP, otp_size, OTPs, &my_state);
   memcpy(class_OTPs, OTPs, otp_size);
   if(status != 1){
     printf("Error in OTP generation of unlock");
   }
-  printf("OTP generation successfull!\n");
 
 
   //Send OTPs to server
   uint8_t serv_enc[128];
   uint8_t server_tag[16];
   send_unlock_info(OTPs, sizeof(OTPs), unlock_aes_iv, sizeof(unlock_aes_iv), OTP_tag, serv_enc, server_tag);
-  printf("Sending OTPs to server...\n");
-
-  printf("[DEMO(1)]: Decrypting OTP to showcase it is the same on the client and server. Original OTP is \n", OTP);
-  for(int i = 0; i < (int) sizeof(OTP); i++){
-    printf("%c", OTP[i]);
-  }
-  printf("\n\n");
 
 
 
-  printf("[DEMO(4)]: Receiving OTPs from user...\n");
-  printf("[DEMO(4)]: Validating OTPs...\n");
+
   bool isValid = false;
   OTPvalidation(shared_secret, shared_length, unlock_aes_iv, sizeof(unlock_aes_iv), server_tag, serv_enc, sizeof(serv_enc), OTP, &isValid, &my_state);
 
-  printf("[DEMO(5)]: Is OTP valid? 0 represents not valid, 1 represents valid : %d\n", isValid);
+  printf("Is OTP valid? 0 represents not valid, 1 represents valid : %d\n", isValid);
   if(isValid){
     state = 7; 
 

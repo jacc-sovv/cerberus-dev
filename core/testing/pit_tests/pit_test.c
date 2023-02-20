@@ -14,10 +14,7 @@ static void test_pit_lock(CuTest *test){
     TEST_START;
 
     uint8_t secret[32];
-    int status = lock(secret);
-    if(status != 0){
-        printf("Error");
-    }
+    lock(secret);
     int state = get_state();
     CuAssertIntEquals(test, 0, state);
 }
