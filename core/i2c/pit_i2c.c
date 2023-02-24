@@ -17,7 +17,9 @@ int pit_connect(int desired_port){
 
   sock = socket(AF_INET, SOCK_STREAM, 0);
   if (sock < 0){
+
     return PIT_I2C_CONNECTION_FAILURE;
+
   }
 
   memset(&addr, 0, sizeof(addr));
@@ -26,8 +28,12 @@ int pit_connect(int desired_port){
   addr.sin_addr.s_addr = inet_addr(ip);
 
   if (connect(sock, (struct sockaddr*)&addr, sizeof(addr)) != 0) {
+
     return PIT_I2C_CONNECTION_FAILURE;
   }
+
+
+
   return sock;
 }
 
@@ -47,7 +53,6 @@ int keyexchangestate(uint8_t *pubkey_cli, size_t pubkey_der_length, uint8_t *pub
 
 int send_unlock_info(uint8_t *OTPs, size_t OTPs_size, uint8_t *unlock_aes_iv, size_t unlock_aes_iv_size, uint8_t *OTP_tag, uint8_t *server_encrypted_message, uint8_t *server_tag){
   int sock = pit_connect(5573);
-  // printf("aes iv size is %d, otp tag size if %d\n", unlock_aes_iv_size, OTP_tag_size);
   send(sock, OTPs, OTPs_size, 0);                    //Send OTPs
   send(sock, unlock_aes_iv, unlock_aes_iv_size, 0);  //Send the IV for the AES cipher
   send(sock, OTP_tag, 16, 0);                        //Send AES-GCM tag

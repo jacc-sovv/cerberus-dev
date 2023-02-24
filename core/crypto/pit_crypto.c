@@ -96,7 +96,9 @@ int OTPgen(uint8_t *secret,  size_t secret_size, uint8_t *AESIV, size_t aesiv_si
 	status = rng_mbedtls_init (&engine);
 	status = engine.base.generate_random_buffer (&engine.base, OTPsize, OTP);
 
+
 status = encryption(OTP, OTPsize, secret, secret_size, AESIV, aesiv_size, tag, OTPs, state);
+
 
 *state = 6;
 return status;

@@ -73,24 +73,25 @@ int unlock(){
   uint8_t OTP_tag[16];
   uint8_t OTP[otp_size];
   uint8_t OTPs[otp_size];
-  
+
   int status = OTPgen(shared_secret, shared_length, unlock_aes_iv, sizeof(unlock_aes_iv), OTP_tag, OTP, otp_size, OTPs, &my_state);
   memcpy(class_OTPs, OTPs, otp_size);
   if(status != 1){
     return PIT_OTP_GENERATION_FAILURE;
   }
-  
+
 
 
   //Send OTPs to server
   uint8_t serv_enc[128];
   uint8_t server_tag[16];
   send_unlock_info(OTPs, sizeof(OTPs), unlock_aes_iv, sizeof(unlock_aes_iv), OTP_tag, serv_enc, server_tag);
- 
+
 
 
   bool isValid = false;
   OTPvalidation(shared_secret, shared_length, unlock_aes_iv, sizeof(unlock_aes_iv), server_tag, serv_enc, sizeof(serv_enc), OTP, &isValid, &my_state);
+
   if(isValid){
     state = 7; 
 
