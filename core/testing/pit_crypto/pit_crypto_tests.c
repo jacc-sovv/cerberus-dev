@@ -189,7 +189,7 @@ static void test_decryption(CuTest *test){
     uint8_t decrypted_msg[msg_length];
     status = decryption(ciphertext, sizeof(ciphertext), secret1, sizeof(secret1), AES_IV_TESTING, sizeof(AES_IV_TESTING), tag, decrypted_msg, &state);
     CuAssertIntEquals(test, 1, status);
-    // printf("Inside decryption test, decrypted msg is %s\n", decrypted_msg);
+    
     status = testing_validate_array (msg, decrypted_msg, sizeof(decrypted_msg));
     CuAssertIntEquals (test, 0, status);
     

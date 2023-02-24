@@ -19,6 +19,7 @@
 #include "pit/pit.h"
 #include <arpa/inet.h>
 #include "i2c/pit_i2c.h"
+#include "pit_crypto.h"
 
 
 int keygenstate(size_t key_length, struct ecc_private_key *privkey, struct ecc_public_key *pubkey, int *state){
@@ -33,7 +34,7 @@ int keygenstate(size_t key_length, struct ecc_private_key *privkey, struct ecc_p
     return 1;
   }
   else{
-    return -1;
+    return PIT_CRYPTO_KEY_GENERATION_FAILED;
   }
   
 }
@@ -45,11 +46,14 @@ int secretkey(struct ecc_private_key *privkey, struct ecc_public_key *pubkey, ui
   ecc_mbedtls_init (&engine);
   int shared_length = engine.base.get_shared_secret_max_length(&engine.base, privkey);
   uint8_t out[shared_length];
-  engine.base.compute_shared_secret (&engine.base, privkey, pubkey, out, sizeof (out));
+  int status = engine.base.compute_shared_secret (&engine.base, privkey, pubkey, out, sizeof (out));
   ecc_mbedtls_release (&engine);
 
   memcpy(secret, out, shared_length);
 
+  if(shared_length != status){
+    return PIT_CRYPTO_SECRET_KEY_NOT_EXPECTED_LENGTH;
+  }
   *state = 3;
   return 1;
 }
@@ -65,6 +69,9 @@ int encryption(uint8_t *msg, size_t msg_size, uint8_t *secret, size_t secret_len
   aes_mbedtls_release(&aes_engine);
 
   *state = 4;
+  if(status != 0){
+    return PIT_CRYPTO_ENCRYPTION_FAILED;
+  }
   return status + 1;
 
 }
@@ -77,6 +84,9 @@ int decryption(uint8_t *ciphertext, size_t ciphertext_size, uint8_t *secret, siz
   int stat = aes_engine.base.decrypt_data (&aes_engine.base, ciphertext, ciphertext_size,
 		tag, AESIV, AESIV_SIZE, plaintext, ciphertext_size);
   *state = 5;
+  if(stat != 0){
+    return PIT_CRYPTO_DECRYPTION_FAILED;
+  }
   return stat + 1;
 }
 
@@ -85,7 +95,10 @@ int OTPgen(uint8_t *secret,  size_t secret_size, uint8_t *AESIV, size_t aesiv_si
 	int status;
 	status = rng_mbedtls_init (&engine);
 	status = engine.base.generate_random_buffer (&engine.base, OTPsize, OTP);
-  status = encryption(OTP, OTPsize, secret, secret_size, AESIV, aesiv_size, tag, OTPs, state);
+
+
+status = encryption(OTP, OTPsize, secret, secret_size, AESIV, aesiv_size, tag, OTPs, state);
+
 
 *state = 6;
 return status;
@@ -106,8 +119,8 @@ int OTPvalidation(uint8_t * secret, size_t secret_size, uint8_t *AESIV, size_t A
 
   for(int i = 0; i < (int)OTPs_size; i++){
     if(plaintext[i] != valOTP[i]){
-      
       flag = false;
+      break;
     }
   }
 
@@ -115,3 +128,5 @@ int OTPvalidation(uint8_t * secret, size_t secret_size, uint8_t *AESIV, size_t A
   *state = 7;
   return stat + 1;
 }
+
+
