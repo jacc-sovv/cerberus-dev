@@ -66,7 +66,8 @@ int unlock(){
   };
 
   //Start of changes
-  //Step 1 - Receive (from the server) their product id which is encrypted (ePID), validate it against a real product ID
+  // Can take in variable size, where do they want the product id validation? Can move it wherever needed
+  //Create new function to do this so it's portable
   int product_id_size = 16;
   uint8_t PID[16] = "ABCDEFGHIJKLMNOP";
 
