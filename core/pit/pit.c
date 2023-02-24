@@ -33,7 +33,7 @@ int lock(uint8_t *secret){
 
   int key_stat = keygenstate(keysize, &priv_key, &pub_key, &state);
   if(key_stat != 1){
-    printf("Error in lock's keygen");
+    return PIT_KEY_GEN_FAILURE;
   }
 
   struct ecc_engine_mbedtls engine;
@@ -53,7 +53,12 @@ int lock(uint8_t *secret){
   
   engine.base.init_public_key(&engine.base, buffer, der_length, &pub_key_serv);
   ecc_mbedtls_release (&engine);
-  secretkey(&priv_key, &pub_key_serv, secret, &state);
+  key_stat = secretkey(&priv_key, &pub_key_serv, secret, &state);
+
+  if(key_stat != 1){
+    return PIT_SECRET_KEY_GEN_FAILURE;
+  }
+
   memcpy(shared_secret, secret, shared_length);
   state = 0;
   return 0;
@@ -68,35 +73,24 @@ int unlock(){
   uint8_t OTP_tag[16];
   uint8_t OTP[otp_size];
   uint8_t OTPs[otp_size];
-  printf("Client generating OTP...\n");
+  
   int status = OTPgen(shared_secret, shared_length, unlock_aes_iv, sizeof(unlock_aes_iv), OTP_tag, OTP, otp_size, OTPs, &my_state);
   memcpy(class_OTPs, OTPs, otp_size);
   if(status != 1){
-    printf("Error in OTP generation of unlock");
+    return PIT_OTP_GENERATION_FAILURE;
   }
-  printf("OTP generation successfull!\n");
+  
 
 
   //Send OTPs to server
   uint8_t serv_enc[128];
   uint8_t server_tag[16];
   send_unlock_info(OTPs, sizeof(OTPs), unlock_aes_iv, sizeof(unlock_aes_iv), OTP_tag, serv_enc, server_tag);
-  printf("Sending OTPs to server...\n");
-
-  printf("[DEMO(1)]: Decrypting OTP to showcase it is the same on the client and server. Original OTP is \n", OTP);
-  for(int i = 0; i < (int) sizeof(OTP); i++){
-    printf("%c", OTP[i]);
-  }
-  printf("\n\n");
+ 
 
 
-
-  printf("[DEMO(4)]: Receiving OTPs from user...\n");
-  printf("[DEMO(4)]: Validating OTPs...\n");
   bool isValid = false;
   OTPvalidation(shared_secret, shared_length, unlock_aes_iv, sizeof(unlock_aes_iv), server_tag, serv_enc, sizeof(serv_enc), OTP, &isValid, &my_state);
-
-  printf("[DEMO(5)]: Is OTP valid? 0 represents not valid, 1 represents valid : %d\n", isValid);
   if(isValid){
     state = 7; 
 
@@ -113,3 +107,6 @@ int get_OTPs(uint8_t *OTPs){
   memcpy(OTPs, class_OTPs, 128);  //Size of OTPs is always 128
   return 1;
 }
+
+
+

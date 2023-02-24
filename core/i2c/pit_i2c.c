@@ -17,10 +17,7 @@ int pit_connect(int desired_port){
 
   sock = socket(AF_INET, SOCK_STREAM, 0);
   if (sock < 0){
-    perror("[-] Socket error");
-    exit(1);
-  } else {
-  printf("[+] TCP server socket created.\n");
+    return PIT_I2C_CONNECTION_FAILURE;
   }
 
   memset(&addr, 0, sizeof(addr));
@@ -29,13 +26,8 @@ int pit_connect(int desired_port){
   addr.sin_addr.s_addr = inet_addr(ip);
 
   if (connect(sock, (struct sockaddr*)&addr, sizeof(addr)) != 0) {
-    printf("connection failed\n");
-    exit(0);
-  }else{
-  printf("Connected to the server.\n");
-
-}
-
+    return PIT_I2C_CONNECTION_FAILURE;
+  }
   return sock;
 }
 
