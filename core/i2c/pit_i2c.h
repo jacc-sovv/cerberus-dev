@@ -39,4 +39,6 @@ int send_unlock_info(uint8_t *OTPs, size_t OTPs_size, uint8_t *unlock_aes_iv, si
  */
 enum {
   PIT_I2C_CONNECTION_FAILURE = PIT_I2C_ERROR (0x00),	/** Decryption failed*/
+  PIT_I2C_KEY_EXCHANGE_SUCESS = 1,
+  PIT_I2C_SEND_UNLOCK_INFO_SUCESS = 1,
 };

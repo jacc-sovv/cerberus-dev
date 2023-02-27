@@ -31,7 +31,7 @@ int lock(uint8_t *secret){
 
   size_t keysize = (256 / 8);
 
-  int key_stat = keygenstate(keysize, &priv_key, &pub_key, &state);
+  int key_stat = pit_keygenstate(keysize, &priv_key, &pub_key, &state);
   if(key_stat != 1){
     return PIT_KEY_GEN_FAILURE;
   }
@@ -53,7 +53,7 @@ int lock(uint8_t *secret){
   
   engine.base.init_public_key(&engine.base, buffer, der_length, &pub_key_serv);
   ecc_mbedtls_release (&engine);
-  key_stat = secretkey(&priv_key, &pub_key_serv, secret, &state);
+  key_stat = pit_secretkey(&priv_key, &pub_key_serv, secret, &state);
 
   if(key_stat != 1){
     return PIT_SECRET_KEY_GEN_FAILURE;
@@ -61,7 +61,7 @@ int lock(uint8_t *secret){
 
   memcpy(shared_secret, secret, shared_length);
   state = 0;
-  return 0;
+  return PIT_LOCK_SUCCESS;
 }
 
 int unlock(){
@@ -74,7 +74,7 @@ int unlock(){
   uint8_t OTP[otp_size];
   uint8_t OTPs[otp_size];
 
-  int status = OTPgen(shared_secret, shared_length, unlock_aes_iv, sizeof(unlock_aes_iv), OTP_tag, OTP, otp_size, OTPs, &my_state);
+  int status = pit_OTPgen(shared_secret, shared_length, unlock_aes_iv, sizeof(unlock_aes_iv), OTP_tag, OTP, otp_size, OTPs, &my_state);
   memcpy(class_OTPs, OTPs, otp_size);
   if(status != 1){
     return PIT_OTP_GENERATION_FAILURE;
@@ -90,13 +90,13 @@ int unlock(){
 
 
   bool isValid = false;
-  OTPvalidation(shared_secret, shared_length, unlock_aes_iv, sizeof(unlock_aes_iv), server_tag, serv_enc, sizeof(serv_enc), OTP, &isValid, &my_state);
+  pit_OTPvalidation(shared_secret, shared_length, unlock_aes_iv, sizeof(unlock_aes_iv), server_tag, serv_enc, sizeof(serv_enc), OTP, &isValid, &my_state);
 
   if(isValid){
     state = 7; 
-
+    return PIT_UNLOCK_SUCCESS;
   }
-  return isValid;
+  return PIT_UNLOCK_NOT_VALID;
 
 }
 
