@@ -32,6 +32,9 @@ int keyexchangestate(uint8_t *pubkey_cli, size_t pubkey_der_length, uint8_t *pub
 int send_unlock_info(uint8_t *OTPs, size_t OTPs_size, uint8_t *unlock_aes_iv, size_t unlock_aes_iv_size, uint8_t *OTP_tag, uint8_t *server_encrypted_message, uint8_t *server_tag);
 
 
+
+int receive_product_info(uint8_t *EncryptedProductID, uint8_t *EncryptedProductIDTag, size_t ProductIDSize, uint8_t *aes_iv, size_t aes_iv_size);
+
 #define	PIT_I2C_ERROR(code)		ROT_ERROR (ROT_MODULE_PIT_CRYPTO, code)
 
 /**
@@ -41,4 +44,6 @@ enum {
   PIT_I2C_CONNECTION_FAILURE = PIT_I2C_ERROR (0x00),	/** Decryption failed*/
   PIT_I2C_KEY_EXCHANGE_SUCESS = 1,
   PIT_I2C_SEND_UNLOCK_INFO_SUCESS = 1,
+  PIT_I2C_RECEIVE_PRODUCT_INFO_SUCESS = 1,
 };
+
