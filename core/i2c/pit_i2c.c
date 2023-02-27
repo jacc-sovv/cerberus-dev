@@ -70,6 +70,6 @@ int receive_product_info(uint8_t *EncryptedProductID, uint8_t *EncryptedProductI
   send(sock, aes_iv, aes_iv_size, 0);
   recv(sock, EncryptedProductID, ProductIDSize, 0);
   recv(sock, EncryptedProductIDTag, 16, 0);
-  return 1;
+  return PIT_I2C_RECEIVE_PRODUCT_INFO_SUCESS;
 
 }
