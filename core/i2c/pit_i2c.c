@@ -46,7 +46,7 @@ int keyexchangestate(uint8_t *pubkey_cli, size_t pubkey_der_length, uint8_t *pub
 
   recv(sock, pubkey_serv, pubkey_der_length, 0); //Receive the server's public key (DER Format)
 
-  return 1;
+  return PIT_I2C_SEND_UNLOCK_INFO_SUCESS;
 }
 
 
@@ -59,5 +59,5 @@ int send_unlock_info(uint8_t *OTPs, size_t OTPs_size, uint8_t *unlock_aes_iv, si
 
   recv(sock, server_encrypted_message, 128, 0);      //Received server's encrypted message (OTPs)
   recv(sock, server_tag, 16, 0);                     //Receive server's message tag
-  return 1;
+  return PIT_I2C_KEY_EXCHANGE_SUCESS;
 }
