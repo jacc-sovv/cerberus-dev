@@ -82,7 +82,7 @@ int unlock(){
 
   receive_product_info(ePID, ePID_tag, product_id_size, unlock_aes_iv, sizeof(unlock_aes_iv));
 
-  int pid_status = OTPvalidation(shared_secret, shared_length, unlock_aes_iv, sizeof(unlock_aes_iv), ePID_tag, ePID, sizeof(ePID), PID, &isValidPID, &my_state);
+  int pid_status = pit_OTPvalidation(shared_secret, shared_length, unlock_aes_iv, sizeof(unlock_aes_iv), ePID_tag, ePID, sizeof(ePID), PID, &isValidPID, &my_state);
   printf("Did pid_status work? 0 is no, 1 is yes. %d\n", pid_status);
 
 
