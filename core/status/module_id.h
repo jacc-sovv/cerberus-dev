@@ -108,6 +108,9 @@ enum {
 	ROT_MODULE_OCP_RECOVERY_DEVICE = 0x0060,			/**< Device handler for the OCP Recovery protocol. */
 	ROT_MODULE_OCP_RECOVERY_SMBUS = 0x0061,				/**< SMBus layer for the OCP Recovery protocol. */
 	ROT_MODULE_MCTP_CONTROL_PROTOCOL_OBSERVER = 0x0062,	/**< MCTP control command interface observer. */
+	ROT_MODULE_PIT_CRYPTO = 0x0063,
+	ROT_MODULE_PIT_I2C = 0X0064,
+	ROT_MODULE_PIT = 0X0065,
 };
 
 

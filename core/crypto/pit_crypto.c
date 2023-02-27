@@ -19,9 +19,10 @@
 #include "pit/pit.h"
 #include <arpa/inet.h>
 #include "i2c/pit_i2c.h"
+#include "pit_crypto.h"
 
 
-int keygenstate(size_t key_length, struct ecc_private_key *privkey, struct ecc_public_key *pubkey, int *state){
+int pit_keygenstate(size_t key_length, struct ecc_private_key *privkey, struct ecc_public_key *pubkey, int *state){
   // Do the computation and generate privkey and pubkey
   struct ecc_engine_mbedtls engine;
   ecc_mbedtls_init (&engine);
@@ -30,31 +31,34 @@ int keygenstate(size_t key_length, struct ecc_private_key *privkey, struct ecc_p
   *state = 1;
   ecc_mbedtls_release (&engine);
   if(status == 0){
-    return 1;
+    return PIT_CRYPTO_KEYGEN_SUCESS;
   }
   else{
-    return -1;
+    return PIT_CRYPTO_KEY_GENERATION_FAILED;
   }
   
 }
 
 
-
-int secretkey(struct ecc_private_key *privkey, struct ecc_public_key *pubkey, uint8_t *secret, int *state){
+//Let's update the names to be more "api" like - pit_secret_key_gen or something similar...
+int pit_secretkey(struct ecc_private_key *privkey, struct ecc_public_key *pubkey, uint8_t *secret, int *state){
   struct ecc_engine_mbedtls engine;
   ecc_mbedtls_init (&engine);
   int shared_length = engine.base.get_shared_secret_max_length(&engine.base, privkey);
   uint8_t out[shared_length];
-  engine.base.compute_shared_secret (&engine.base, privkey, pubkey, out, sizeof (out));
+  int status = engine.base.compute_shared_secret (&engine.base, privkey, pubkey, out, sizeof (out));
   ecc_mbedtls_release (&engine);
 
   memcpy(secret, out, shared_length);
 
+  if(shared_length != status){
+    return PIT_CRYPTO_SECRET_KEY_NOT_EXPECTED_LENGTH;
+  }
   *state = 3;
-  return 1;
+  return PIT_CRYPTO_SECRET_KEY_SUCESS;
 }
 
-int encryption(uint8_t *msg, size_t msg_size, uint8_t *secret, size_t secret_length, uint8_t *AESIV, size_t AESIV_SIZE, uint8_t *tag, uint8_t *ciphertext, int *state){
+int pit_encryption(uint8_t *msg, size_t msg_size, uint8_t *secret, size_t secret_length, uint8_t *AESIV, size_t AESIV_SIZE, uint8_t *tag, uint8_t *ciphertext, int *state){
   struct aes_engine_mbedtls aes_engine;	
   aes_mbedtls_init (&aes_engine);
 
@@ -65,11 +69,14 @@ int encryption(uint8_t *msg, size_t msg_size, uint8_t *secret, size_t secret_len
   aes_mbedtls_release(&aes_engine);
 
   *state = 4;
-  return status + 1;
+  if(status != 0){
+    return PIT_CRYPTO_ENCRYPTION_FAILED;
+  }
+  return PIT_CRYPTO_ENCRYPTION_SUCESS;
 
 }
 
-int decryption(uint8_t *ciphertext, size_t ciphertext_size, uint8_t *secret, size_t secret_length, uint8_t *AESIV, size_t AESIV_SIZE, uint8_t *tag, uint8_t *plaintext, int *state){
+int pit_decryption(uint8_t *ciphertext, size_t ciphertext_size, uint8_t *secret, size_t secret_length, uint8_t *AESIV, size_t AESIV_SIZE, uint8_t *tag, uint8_t *plaintext, int *state){
   struct aes_engine_mbedtls aes_engine;	
   aes_mbedtls_init (&aes_engine);
   aes_engine.base.set_key (&aes_engine.base, secret, secret_length);
@@ -77,27 +84,33 @@ int decryption(uint8_t *ciphertext, size_t ciphertext_size, uint8_t *secret, siz
   int stat = aes_engine.base.decrypt_data (&aes_engine.base, ciphertext, ciphertext_size,
 		tag, AESIV, AESIV_SIZE, plaintext, ciphertext_size);
   *state = 5;
-  return stat + 1;
+  if(stat != 0){
+    return PIT_CRYPTO_DECRYPTION_FAILED;
+  }
+  return PIT_CRYPTO_DECRYPTION_SUCESS;
 }
 
-int OTPgen(uint8_t *secret,  size_t secret_size, uint8_t *AESIV, size_t aesiv_size, uint8_t *tag, uint8_t *OTP, size_t OTPsize, uint8_t *OTPs, int *state){
+int pit_OTPgen(uint8_t *secret,  size_t secret_size, uint8_t *AESIV, size_t aesiv_size, uint8_t *tag, uint8_t *OTP, size_t OTPsize, uint8_t *OTPs, int *state){
   struct rng_engine_mbedtls engine;
 	int status;
 	status = rng_mbedtls_init (&engine);
 	status = engine.base.generate_random_buffer (&engine.base, OTPsize, OTP);
-
   if(status != 0){
-    printf("RNG engine failed!\n");
-
+    return PIT_CRYPTO_OTP_GENERATION_FAILED;
   }
-status = encryption(OTP, OTPsize, secret, secret_size, AESIV, aesiv_size, tag, OTPs, state);
+
+status = pit_encryption(OTP, OTPsize, secret, secret_size, AESIV, aesiv_size, tag, OTPs, state);
+
+if(status != 1){
+  return PIT_CRYPTO_ENCRYPTION_FAILED;
+}
 
 *state = 6;
-return status;
+return PIT_CRYPTO_OTPGEN_SUCESS;
 }
 
 
-int OTPvalidation(uint8_t * secret, size_t secret_size, uint8_t *AESIV, size_t AESIV_size, uint8_t *tag, uint8_t *OTPs, size_t OTPs_size, uint8_t *valOTP, bool *result, int *state){
+int pit_OTPvalidation(uint8_t * secret, size_t secret_size, uint8_t *AESIV, size_t AESIV_size, uint8_t *tag, uint8_t *OTPs, size_t OTPs_size, uint8_t *valOTP, bool *result, int *state){
   struct aes_engine_mbedtls aes_engine;	
   aes_mbedtls_init (&aes_engine);
   aes_engine.base.set_key (&aes_engine.base, secret, secret_size);
@@ -106,17 +119,26 @@ int OTPvalidation(uint8_t * secret, size_t secret_size, uint8_t *AESIV, size_t A
   int stat = aes_engine.base.decrypt_data (&aes_engine.base, OTPs, OTPs_size,
 		tag, AESIV, AESIV_size, plaintext, OTPs_size);
 
+  if(stat != 0){
+    return PIT_CRYPTO_DECRYPTION_FAILED;
+  }
+
   
   bool flag = true;
 
   for(int i = 0; i < (int)OTPs_size; i++){
     if(plaintext[i] != valOTP[i]){
-      printf("Issue at %d of comparison\n", i);
       flag = false;
+      break;
     }
   }
 
   *result = flag;
   *state = 7;
-  return stat + 1;
+  if(flag){
+    return PIT_CRYPTO_OTP_VALID;
+  }
+  return PIT_CRYPTO_OTP_INVALID;
 }
+
+

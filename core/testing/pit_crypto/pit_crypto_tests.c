@@ -27,7 +27,7 @@ static void test_keygenstate(CuTest *test){
     size_t keysize = (256 / 8);
     int state = -1;
 
-    int status = keygenstate(keysize, &priv_key, &pub_key, &state);
+    int status = pit_keygenstate(keysize, &priv_key, &pub_key, &state);
     CuAssertPtrNotNull(test, pub_key.context);
     CuAssertPtrNotNull(test, priv_key.context);
     CuAssertIntEquals(test, 1, status);
@@ -69,10 +69,10 @@ static void test_secretkey(CuTest *test){
 
 
 
-    int status = keygenstate(keysize, &priv_key1, &pub_key1, &state);
+    int status = pit_keygenstate(keysize, &priv_key1, &pub_key1, &state);
     CuAssertIntEquals(test, 1, status);
 
-    status = keygenstate(keysize, &priv_key2, &pub_key2, &state);
+    status = pit_keygenstate(keysize, &priv_key2, &pub_key2, &state);
     CuAssertIntEquals(test, 1, status);
 
     int shared_length = engine.base.get_shared_secret_max_length(&engine.base, &priv_key2);
@@ -85,10 +85,10 @@ static void test_secretkey(CuTest *test){
     uint8_t secret1[shared_length];
     uint8_t secret2[shared_length];
 
-    status = secretkey(&priv_key1, &pub_key2, secret1, &state);
+    status = pit_secretkey(&priv_key1, &pub_key2, secret1, &state);
     CuAssertIntEquals(test, 1, status);
 
-    status = secretkey(&priv_key2, &pub_key1, secret2, &state);
+    status = pit_secretkey(&priv_key2, &pub_key1, secret2, &state);
     CuAssertIntEquals(test, 1, status);
 
     status = testing_validate_array (secret1, secret2, sizeof(secret1));
@@ -111,10 +111,10 @@ static void test_encryptionPID(CuTest *test){
 
 
 
-    int status = keygenstate(keysize, &priv_key1, &pub_key1, &state);
+    int status = pit_keygenstate(keysize, &priv_key1, &pub_key1, &state);
     CuAssertIntEquals(test, 1, status);
 
-    status = keygenstate(keysize, &priv_key2, &pub_key2, &state);
+    status = pit_keygenstate(keysize, &priv_key2, &pub_key2, &state);
     CuAssertIntEquals(test, 1, status);
 
     int shared_length = engine.base.get_shared_secret_max_length(&engine.base, &priv_key2);
@@ -127,10 +127,10 @@ static void test_encryptionPID(CuTest *test){
     uint8_t secret1[shared_length];
     uint8_t secret2[shared_length];
 
-    status = secretkey(&priv_key1, &pub_key2, secret1, &state);
+    status = pit_secretkey(&priv_key1, &pub_key2, secret1, &state);
     CuAssertIntEquals(test, 1, status);
 
-    status = secretkey(&priv_key2, &pub_key1, secret2, &state);
+    status = pit_secretkey(&priv_key2, &pub_key1, secret2, &state);
     CuAssertIntEquals(test, 1, status);
 
     status = testing_validate_array (secret1, secret2, sizeof(secret1));
@@ -141,7 +141,7 @@ static void test_encryptionPID(CuTest *test){
     uint8_t ciphertext[msg_length];
     uint8_t tag[16];    //Tags are always length 16
 
-    status = encryption(msg, msg_length, secret1, sizeof(secret1), AES_IV_TESTING, sizeof(AES_IV_TESTING), tag, ciphertext, &state);
+    status = pit_encryption(msg, msg_length, secret1, sizeof(secret1), AES_IV_TESTING, sizeof(AES_IV_TESTING), tag, ciphertext, &state);
 
     CuAssertIntEquals(test, 1, status);
     CuAssertIntEquals(test, 4, state);
@@ -163,10 +163,10 @@ static void test_decryption(CuTest *test){
 
 
 
-    int status = keygenstate(keysize, &priv_key1, &pub_key1, &state);
+    int status = pit_keygenstate(keysize, &priv_key1, &pub_key1, &state);
     CuAssertIntEquals(test, 1, status);
 
-    status = keygenstate(keysize, &priv_key2, &pub_key2, &state);
+    status = pit_keygenstate(keysize, &priv_key2, &pub_key2, &state);
     CuAssertIntEquals(test, 1, status);
 
     int shared_length = engine.base.get_shared_secret_max_length(&engine.base, &priv_key2);
@@ -176,7 +176,7 @@ static void test_decryption(CuTest *test){
 
     uint8_t secret1[shared_length];
 
-    status = secretkey(&priv_key1, &pub_key2, secret1, &state);
+    status = pit_secretkey(&priv_key1, &pub_key2, secret1, &state);
     CuAssertIntEquals(test, 1, status);
 
     int msg_length = 128;
@@ -184,12 +184,12 @@ static void test_decryption(CuTest *test){
     uint8_t ciphertext[msg_length];
     uint8_t tag[16];    //Tags are always length 16
 
-    status = encryption(msg, msg_length, secret1, sizeof(secret1), AES_IV_TESTING, sizeof(AES_IV_TESTING), tag, ciphertext, &state);
+    status = pit_encryption(msg, msg_length, secret1, sizeof(secret1), AES_IV_TESTING, sizeof(AES_IV_TESTING), tag, ciphertext, &state);
     
     uint8_t decrypted_msg[msg_length];
-    status = decryption(ciphertext, sizeof(ciphertext), secret1, sizeof(secret1), AES_IV_TESTING, sizeof(AES_IV_TESTING), tag, decrypted_msg, &state);
+    status = pit_decryption(ciphertext, sizeof(ciphertext), secret1, sizeof(secret1), AES_IV_TESTING, sizeof(AES_IV_TESTING), tag, decrypted_msg, &state);
     CuAssertIntEquals(test, 1, status);
-    // printf("Inside decryption test, decrypted msg is %s\n", decrypted_msg);
+    
     status = testing_validate_array (msg, decrypted_msg, sizeof(decrypted_msg));
     CuAssertIntEquals (test, 0, status);
     
@@ -231,24 +231,24 @@ static void test_OTPgen(CuTest *test){
 
 
 
-    int status = keygenstate(keysize, &priv_key1, &pub_key1, &state);
+    int status = pit_keygenstate(keysize, &priv_key1, &pub_key1, &state);
     CuAssertIntEquals(test, 1, status);
 
-    status = keygenstate(keysize, &priv_key2, &pub_key2, &state);
+    status = pit_keygenstate(keysize, &priv_key2, &pub_key2, &state);
     CuAssertIntEquals(test, 1, status);
 
     int shared_length = engine.base.get_shared_secret_max_length(&engine.base, &priv_key2);
     ecc_mbedtls_release (&engine);
     uint8_t secret[shared_length];
 
-    status = secretkey(&priv_key1, &pub_key2, secret, &state);
+    status = pit_secretkey(&priv_key1, &pub_key2, secret, &state);
     CuAssertIntEquals(test, 1, status);
 
     size_t OTPsize = 32;
     uint8_t tag[16];
     uint8_t OTP[OTPsize];
     uint8_t OTPs[OTPsize];
-    status = OTPgen(secret, sizeof(secret), AES_IV_TESTING, sizeof(AES_IV_TESTING), tag, OTP, OTPsize, OTPs, &state);
+    status = pit_OTPgen(secret, sizeof(secret), AES_IV_TESTING, sizeof(AES_IV_TESTING), tag, OTP, OTPsize, OTPs, &state);
     CuAssertPtrNotNull(test, OTPs);
     CuAssertIntEquals(test, 1, status);
     CuAssertIntEquals(test, 6, state);
@@ -269,30 +269,30 @@ static void test_OTPvalidation(CuTest *test){
 
 
 
-    int status = keygenstate(keysize, &priv_key1, &pub_key1, &state);
+    int status = pit_keygenstate(keysize, &priv_key1, &pub_key1, &state);
     CuAssertIntEquals(test, 1, status);
 
-    status = keygenstate(keysize, &priv_key2, &pub_key2, &state);
+    status = pit_keygenstate(keysize, &priv_key2, &pub_key2, &state);
     CuAssertIntEquals(test, 1, status);
 
     int shared_length = engine.base.get_shared_secret_max_length(&engine.base, &priv_key2);
     ecc_mbedtls_release (&engine);
     uint8_t secret[shared_length];
 
-    status = secretkey(&priv_key1, &pub_key2, secret, &state);
+    status = pit_secretkey(&priv_key1, &pub_key2, secret, &state);
     CuAssertIntEquals(test, 1, status);
 
     size_t OTPsize = 32;
     uint8_t tag[16];
     uint8_t OTP[OTPsize];
     uint8_t OTPs[OTPsize];
-    status = OTPgen(secret, sizeof(secret), AES_IV_TESTING, sizeof(AES_IV_TESTING), tag, OTP, OTPsize, OTPs, &state);
+    status = pit_OTPgen(secret, sizeof(secret), AES_IV_TESTING, sizeof(AES_IV_TESTING), tag, OTP, OTPsize, OTPs, &state);
     CuAssertPtrNotNull(test, OTPs);
     CuAssertIntEquals(test, 1, status);
     CuAssertIntEquals(test, 6, state);
 
     bool result;
-    status = OTPvalidation(secret, sizeof(secret), AES_IV_TESTING, sizeof(AES_IV_TESTING), tag, OTPs, sizeof(OTPs), OTP, &result, &state);
+    status = pit_OTPvalidation(secret, sizeof(secret), AES_IV_TESTING, sizeof(AES_IV_TESTING), tag, OTPs, sizeof(OTPs), OTP, &result, &state);
 
     CuAssertIntEquals(test, 1, result);
     CuAssertIntEquals(test, 7, state);
