@@ -5,6 +5,9 @@
 #include <stdio.h>
 #include <stdbool.h>
 
+
+#define PRODUCT_ID "ABCDEFGHIJKLMNOP"
+
 /**
  * Sets up needed variables and sets the systems state to lock.
  * Exchanges keys with the server to create a secret key
