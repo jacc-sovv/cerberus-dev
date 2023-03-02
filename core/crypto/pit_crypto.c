@@ -31,7 +31,7 @@ int pit_keygenstate(size_t key_length, struct ecc_private_key *privkey, struct e
   *state = 1;
   ecc_mbedtls_release (&engine);
   if(status == 0){
-    return PIT_CRYPTO_KEYGEN_SUCESS;
+    return SUCESS;
   }
   else{
     return PIT_CRYPTO_KEY_GENERATION_FAILED;
@@ -55,7 +55,7 @@ int pit_secretkey(struct ecc_private_key *privkey, struct ecc_public_key *pubkey
     return PIT_CRYPTO_SECRET_KEY_NOT_EXPECTED_LENGTH;
   }
   *state = 3;
-  return PIT_CRYPTO_SECRET_KEY_SUCESS;
+  return SUCESS;
 }
 
 int pit_encryption(uint8_t *msg, size_t msg_size, uint8_t *secret, size_t secret_length, uint8_t *AESIV, size_t AESIV_SIZE, uint8_t *tag, uint8_t *ciphertext, int *state){
@@ -72,7 +72,7 @@ int pit_encryption(uint8_t *msg, size_t msg_size, uint8_t *secret, size_t secret
   if(status != 0){
     return PIT_CRYPTO_ENCRYPTION_FAILED;
   }
-  return PIT_CRYPTO_ENCRYPTION_SUCESS;
+  return SUCESS;
 
 }
 
@@ -87,7 +87,7 @@ int pit_decryption(uint8_t *ciphertext, size_t ciphertext_size, uint8_t *secret,
   if(stat != 0){
     return PIT_CRYPTO_DECRYPTION_FAILED;
   }
-  return PIT_CRYPTO_DECRYPTION_SUCESS;
+  return SUCESS;
 }
 
 int pit_OTPgen(uint8_t *secret,  size_t secret_size, uint8_t *AESIV, size_t aesiv_size, uint8_t *tag, uint8_t *OTP, size_t OTPsize, uint8_t *OTPs, int *state){
@@ -106,7 +106,7 @@ if(status != 1){
 }
 
 *state = 6;
-return PIT_CRYPTO_OTPGEN_SUCESS;
+return SUCESS;
 }
 
 
@@ -136,7 +136,7 @@ int pit_OTPvalidation(uint8_t * secret, size_t secret_size, uint8_t *AESIV, size
   *result = flag;
   *state = 7;
   if(flag){
-    return PIT_CRYPTO_OTP_VALID;
+    return SUCESS;
   }
   return PIT_CRYPTO_OTP_INVALID;
 }
