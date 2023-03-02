@@ -65,7 +65,7 @@ int send_unlock_info(uint8_t *OTPs, size_t OTPs_size, uint8_t *unlock_aes_iv, si
 
 
 int receive_product_info(uint8_t *EncryptedProductID, uint8_t *EncryptedProductIDTag, size_t ProductIDSize, uint8_t *aes_iv, size_t aes_iv_size){
-  printf("Trying to connect in receive_product_info...\n");
+  //printf("Trying to connect in receive_product_info...\n");
   int sock = pit_connect(5574);
   send(sock, aes_iv, aes_iv_size, 0);
   recv(sock, EncryptedProductID, ProductIDSize, 0);

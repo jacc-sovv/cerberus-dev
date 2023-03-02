@@ -74,7 +74,7 @@ int unlock(){
   // Can take in variable size, where do they want the product id validation? Can move it wherever needed
   //Create new function to do this so it's portable
   int product_id_size = 16;
-  uint8_t PID[16] = "ABCDEFGHIJKLMNOP";
+  //uint8_t PID[16] = "ABCDEFGHIJKLMNOP";
 
   uint8_t ePID[16];
   uint8_t ePID_tag[16];
@@ -82,7 +82,7 @@ int unlock(){
 
   receive_product_info(ePID, ePID_tag, product_id_size, unlock_aes_iv, sizeof(unlock_aes_iv));
 
-  int pid_status = pit_OTPvalidation(shared_secret, shared_length, unlock_aes_iv, sizeof(unlock_aes_iv), ePID_tag, ePID, sizeof(ePID), PID, &isValidPID, &my_state);
+  int pid_status = pit_OTPvalidation(shared_secret, shared_length, unlock_aes_iv, sizeof(unlock_aes_iv), ePID_tag, ePID, sizeof(ePID), (unsigned char *)PRODUCT_ID, &isValidPID, &my_state);
   printf("Did pid_status work? 0 is no, 1 is yes. %d\n", pid_status);
 
 
