@@ -1,6 +1,6 @@
 #include "mbedtls/ecdh.h"
 #include "crypto/ecc_mbedtls.h"
-
+#define SUCESS 1
 /**
 * Initiate a connection to desired server. Dependent on implementation (Socket vs i2c)
 * @param desired_port The desired port to connect to the server on (Need not implement if using i2c)
@@ -42,8 +42,5 @@ int receive_product_info(uint8_t *EncryptedProductID, uint8_t *EncryptedProductI
  */
 enum {
   PIT_I2C_CONNECTION_FAILURE = PIT_I2C_ERROR (0x00),	/** Decryption failed*/
-  PIT_I2C_KEY_EXCHANGE_SUCESS = 1,
-  PIT_I2C_SEND_UNLOCK_INFO_SUCESS = 1,
-  PIT_I2C_RECEIVE_PRODUCT_INFO_SUCESS = 1,
 };
 

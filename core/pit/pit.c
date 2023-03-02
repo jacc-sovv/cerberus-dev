@@ -61,7 +61,7 @@ int lock(uint8_t *secret){
 
   memcpy(shared_secret, secret, shared_length);
   state = 0;
-  return PIT_LOCK_SUCCESS;
+  return SUCESS;
 }
 
 int unlock(){
@@ -114,7 +114,7 @@ int unlock(){
 
   if(isValid){
     state = 7; 
-    return PIT_UNLOCK_SUCCESS;
+    return SUCESS;
   }
   return PIT_UNLOCK_NOT_VALID;
 

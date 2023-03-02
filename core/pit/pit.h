@@ -7,6 +7,7 @@
 
 
 #define PRODUCT_ID "ABCDEFGHIJKLMNOP"
+#define SUCESS 1
 
 /**
  * Sets up needed variables and sets the systems state to lock.
@@ -48,7 +49,5 @@ enum {
   PIT_KEY_GEN_FAILURE = PIT_ERROR (0x00),	/** Failure when generating a key-pair*/
   PIT_SECRET_KEY_GEN_FAILURE = PIT_ERROR (0x01), /** Failure when generating secret-key*/
   PIT_OTP_GENERATION_FAILURE = PIT_ERROR(0x02), /** Failure when generating OTP*/
-  PIT_LOCK_SUCCESS = 0,
-  PIT_UNLOCK_SUCCESS = 1,
-  PIT_UNLOCK_NOT_VALID = 0,
+  PIT_UNLOCK_NOT_VALID = PIT_ERROR(0x03),
 };

@@ -9,6 +9,8 @@
 #include "testing/crypto/ecc_testing.h"
 #include "mbedtls/ecdh.h"
 
+#define SUCESS 1
+
 /**
  * Generates a key pair, sets the state appropriately
  * @param key_length The length of key to use in bytes. 256, 381, 521 bits (so X / 8 bytes) are the supported lengths
@@ -103,11 +105,5 @@ enum {
   PIT_CRYPTO_SECRET_KEY_NOT_EXPECTED_LENGTH = PIT_CRYPTO_ERROR (0x02), /** Failed to compute secret key*/
   PIT_CRYPTO_KEY_GENERATION_FAILED = PIT_CRYPTO_ERROR (0x03), /** Failed to generate a keypair*/
   PIT_CRYPTO_OTP_GENERATION_FAILED = PIT_CRYPTO_ERROR (0x04),
-  PIT_CRYPTO_KEYGEN_SUCESS = 1,
-  PIT_CRYPTO_SECRET_KEY_SUCESS = 1,
-  PIT_CRYPTO_ENCRYPTION_SUCESS = 1,
-  PIT_CRYPTO_DECRYPTION_SUCESS = 1,
-  PIT_CRYPTO_OTPGEN_SUCESS = 1,
-  PIT_CRYPTO_OTP_VALID = 1,
-  PIT_CRYPTO_OTP_INVALID = 0, /** SHOULD ALSO BE ERROR*/
+  PIT_CRYPTO_OTP_INVALID = PIT_CRYPTO_ERROR (0x05), /** SHOULD ALSO BE ERROR*/
 };
