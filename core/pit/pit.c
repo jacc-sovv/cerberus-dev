@@ -83,7 +83,7 @@ int unlock(){
   receive_product_info(ePID, ePID_tag, product_id_size, unlock_aes_iv, sizeof(unlock_aes_iv));
 
   int pid_status = pit_OTPvalidation(shared_secret, shared_length, unlock_aes_iv, sizeof(unlock_aes_iv), ePID_tag, ePID, sizeof(ePID), (unsigned char *)PRODUCT_ID, &isValidPID, &my_state);
-  printf("Did pid_status work? 0 is no, 1 is yes. %d\n", pid_status);
+  printf("Did pid_status (PID) work? 0 is no, 1 is yes. %d\n", pid_status);
 
 
 
@@ -111,7 +111,8 @@ int unlock(){
 
   bool isValid = false;
   pit_OTPvalidation(shared_secret, shared_length, unlock_aes_iv, sizeof(unlock_aes_iv), server_tag, serv_enc, sizeof(serv_enc), OTP, &isValid, &my_state);
-
+  printf("Did pid_status (OTP) work? 0 is no, 1 is yes. %d\n", pid_status);
+  exit(20); //TODO : Remove
   if(isValid){
     state = 7; 
     return SUCESS;
