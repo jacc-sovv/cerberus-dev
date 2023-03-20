@@ -89,7 +89,7 @@ int unlock(){
 
   //End of changes
 
-  int otp_size = 128;
+  int otp_size = 10; //Adjust otp size here
   uint8_t OTP_tag[16];
   uint8_t OTP[otp_size];
   uint8_t OTPs[otp_size];
