@@ -24,8 +24,6 @@ int keyexchangestate(uint8_t *pubkey_cli, size_t pubkey_der_length, uint8_t *pub
  * Sends OTPs, AES IV, and the AES-GCM Tag for OTP encryption to the server, receives the server's encrypted message and tag for that message back
  * @param OTPs The Encrypted OTP to send
  * @param OTPs_size Size (in bytes) of the OTPs
- * @param unlock_aes_iv The AES IV used to encrypt the OTP into OTPs
- * @param unlock_aes_iv_size Size (in bytes) of the unlock_aes_iv param
  * @param OTP_tag The AES-GCM Tag generated when encrypting OTP into OTPs
  * @param server_encrypted_message An empty buffer to hold the server's response message (which will then be validated in the unlock API)
  * @param server_tag The AES-GCM tag for the server's encrypted message
