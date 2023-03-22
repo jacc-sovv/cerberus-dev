@@ -1,6 +1,8 @@
 #include "mbedtls/ecdh.h"
 #include "crypto/ecc_mbedtls.h"
 #define SUCESS 1
+#define UNLOCK_AES_IV (uint8_t[]) {0x20,0x21,0x22,0x23,0x24,0x25,0x26,0x27,0x28,0x29,0x2a,0x2b}
+#define UNLOCK_AES_IV_SIZE sizeof(UNLOCK_AES_IV)
 /**
 * Initiate a connection to desired server. Dependent on implementation (Socket vs i2c)
 * @param desired_port The desired port to connect to the server on (Need not implement if using i2c)
@@ -29,11 +31,11 @@ int keyexchangestate(uint8_t *pubkey_cli, size_t pubkey_der_length, uint8_t *pub
  * @param server_tag The AES-GCM tag for the server's encrypted message
  * @return 1 on success
 */
-int send_unlock_info(uint8_t *OTPs, size_t OTPs_size, uint8_t *unlock_aes_iv, size_t unlock_aes_iv_size, uint8_t *OTP_tag, uint8_t *server_encrypted_message, uint8_t *server_tag);
+int send_unlock_info(uint8_t *OTPs, size_t OTPs_size, uint8_t *OTP_tag, uint8_t *server_encrypted_message, uint8_t *server_tag);
 
 
 
-int receive_product_info(uint8_t *EncryptedProductID, uint8_t *EncryptedProductIDTag, size_t ProductIDSize, uint8_t *aes_iv, size_t aes_iv_size);
+int receive_product_info(uint8_t *EncryptedProductID, uint8_t *EncryptedProductIDTag, size_t ProductIDSize);
 
 #define	PIT_I2C_ERROR(code)		ROT_ERROR (ROT_MODULE_PIT_CRYPTO, code)
 

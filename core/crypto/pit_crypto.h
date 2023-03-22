@@ -6,10 +6,10 @@
 #include <stdbool.h>
 #include "crypto/ecc.h"
 #include "crypto/ecc_mbedtls.h"
-#include "testing/crypto/ecc_testing.h"
-#include "mbedtls/ecdh.h"
 
 #define SUCESS 1
+#define UNLOCK_AES_IV (uint8_t[]) {0x20,0x21,0x22,0x23,0x24,0x25,0x26,0x27,0x28,0x29,0x2a,0x2b}
+#define UNLOCK_AES_IV_SIZE sizeof(UNLOCK_AES_IV)
 
 /**
  * Generates a key pair, sets the state appropriately
@@ -46,7 +46,7 @@ int pit_secretkey(struct ecc_private_key *privkey, struct ecc_public_key *pubkey
  * @param state An int to hold the numerical value of the state
  * @return 1 on success
 */
-int pit_encryption(uint8_t *msg, size_t msg_size, uint8_t *secret, size_t secret_length, uint8_t *AESIV, size_t AESIV_SIZE, uint8_t *tag, uint8_t *ciphertext, int *state);
+int pit_encryption(uint8_t *msg, size_t msg_size, uint8_t *secret, size_t secret_length, uint8_t *tag, uint8_t *ciphertext, int *state);
 
 
 /**
@@ -61,7 +61,7 @@ int pit_encryption(uint8_t *msg, size_t msg_size, uint8_t *secret, size_t secret
  * @param plaintext The buffer to hold the decrypted ciphertext (Will be the same size as the ciphertext)
  * @return 1 on success
 */
-int pit_decryption(uint8_t *ciphertext, size_t ciphertext_size, uint8_t *secret, size_t secret_length, uint8_t *AESIV, size_t AESIV_SIZE, uint8_t *tag, uint8_t *plaintext, int *state);
+int pit_decryption(uint8_t *ciphertext, size_t ciphertext_size, uint8_t *secret, size_t secret_length, uint8_t *tag, uint8_t *plaintext, int *state);
 
 /**
  * A function to generate a random string representing OTP. Additionally, this function will encrypt that OTP using AES-GCM encryption, using the secret key for the AES encryption.
@@ -76,7 +76,7 @@ int pit_decryption(uint8_t *ciphertext, size_t ciphertext_size, uint8_t *secret,
  * @param state An int to hold the numerical value of the state
  * @return 1 on success
 */
-int pit_OTPgen(uint8_t *secret,  size_t secret_size, uint8_t *AESIV, size_t AESIV_SIZE, uint8_t *tag, uint8_t *OTP, size_t OTPSize, uint8_t *OTPs, int *state);
+int pit_OTPgen(uint8_t *secret,  size_t secret_size, uint8_t *tag, uint8_t *OTP, size_t OTPSize, uint8_t *OTPs, int *state);
 
 /**
  * Decrypts an encrypted OTP and compares it to a valid version of the OTP. If the OTP decrypts successfully and matches the valid OTP, the result parameter contains true.
@@ -92,7 +92,7 @@ int pit_OTPgen(uint8_t *secret,  size_t secret_size, uint8_t *AESIV, size_t AESI
  * @param An int to hold the numerical value of the state
  * @return 1 on success
 */
-int pit_OTPvalidation(uint8_t * secret, size_t secret_size, uint8_t *AESIV, size_t AESIV_SIZE, uint8_t *tag, uint8_t *OTPs, size_t OTPs_size, uint8_t *valOTP, bool *result, int *state);
+int pit_OTPvalidation(uint8_t * secret, size_t secret_size, uint8_t *tag, uint8_t *OTPs, size_t OTPs_size, uint8_t *valOTP, bool *result, int *state);
 
 #define	PIT_CRYPTO_ERROR(code)		ROT_ERROR (ROT_MODULE_PIT_CRYPTO, code)
 
