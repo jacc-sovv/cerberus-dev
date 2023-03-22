@@ -66,23 +66,19 @@ int lock(uint8_t *secret){
 
 int unlock(){
   int my_state;
-  uint8_t unlock_aes_iv[] = {
-	0x20,0x21,0x22,0x23,0x24,0x25,0x26,0x27,0x28,0x29,0x2a,0x2b
-  };
 
-  //Start of changes
-  // Can take in variable size, where do they want the product id validation? Can move it wherever needed
-  //Create new function to do this so it's portable
-  int product_id_size = 16;
+
+
+  int product_id_size = 16; //Move to same spot as PID
   //uint8_t PID[16] = "ABCDEFGHIJKLMNOP";
 
   uint8_t ePID[16];
   uint8_t ePID_tag[16];
   bool isValidPID = false;
 
-  receive_product_info(ePID, ePID_tag, product_id_size, unlock_aes_iv, sizeof(unlock_aes_iv));
+  receive_product_info(ePID, ePID_tag, product_id_size);
 
-  int pid_status = pit_OTPvalidation(shared_secret, shared_length, unlock_aes_iv, sizeof(unlock_aes_iv), ePID_tag, ePID, sizeof(ePID), (unsigned char *)PRODUCT_ID, &isValidPID, &my_state);
+  int pid_status = pit_OTPvalidation(shared_secret, shared_length, ePID_tag, ePID, sizeof(ePID), (unsigned char *)PRODUCT_ID, &isValidPID, &my_state);
   printf("Did pid_status work? 0 is no, 1 is yes. %d\n", pid_status);
 
 
@@ -94,7 +90,7 @@ int unlock(){
   uint8_t OTP[otp_size];
   uint8_t OTPs[otp_size];
 
-  int status = pit_OTPgen(shared_secret, shared_length, unlock_aes_iv, sizeof(unlock_aes_iv), OTP_tag, OTP, otp_size, OTPs, &my_state);
+  int status = pit_OTPgen(shared_secret, shared_length, OTP_tag, OTP, otp_size, OTPs, &my_state);
   memcpy(class_OTPs, OTPs, otp_size);
   if(status != 1){
     return PIT_OTP_GENERATION_FAILURE;
@@ -105,13 +101,14 @@ int unlock(){
   //Send OTPs to server
   uint8_t serv_enc[128];
   uint8_t server_tag[16];
-  send_unlock_info(OTPs, sizeof(OTPs), unlock_aes_iv, sizeof(unlock_aes_iv), OTP_tag, serv_enc, server_tag);
+  send_unlock_info(OTPs, sizeof(OTPs), OTP_tag, serv_enc, server_tag);
 
 
 
   bool isValid = false;
-  pit_OTPvalidation(shared_secret, shared_length, unlock_aes_iv, sizeof(unlock_aes_iv), server_tag, serv_enc, sizeof(serv_enc), OTP, &isValid, &my_state);
-
+  pit_OTPvalidation(shared_secret, shared_length, server_tag, serv_enc, sizeof(serv_enc), OTP, &isValid, &my_state);
+  printf("Did Final OTP val work? 0 is no, 1 is yes. %d", isValid);
+  exit(20);
   if(isValid){
     state = 7; 
     return SUCESS;

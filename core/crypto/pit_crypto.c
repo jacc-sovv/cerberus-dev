@@ -58,14 +58,14 @@ int pit_secretkey(struct ecc_private_key *privkey, struct ecc_public_key *pubkey
   return SUCESS;
 }
 
-int pit_encryption(uint8_t *msg, size_t msg_size, uint8_t *secret, size_t secret_length, uint8_t *AESIV, size_t AESIV_SIZE, uint8_t *tag, uint8_t *ciphertext, int *state){
+int pit_encryption(uint8_t *msg, size_t msg_size, uint8_t *secret, size_t secret_length, uint8_t *tag, uint8_t *ciphertext, int *state){
   struct aes_engine_mbedtls aes_engine;	
   aes_mbedtls_init (&aes_engine);
 
 
   aes_engine.base.set_key(&aes_engine.base, secret, secret_length);
-  int status = aes_engine.base.encrypt_data (&aes_engine.base, msg, msg_size, AESIV,
-		      AESIV_SIZE, ciphertext, msg_size, tag, 16);
+  int status = aes_engine.base.encrypt_data (&aes_engine.base, msg, msg_size, UNLOCK_AES_IV,
+		      UNLOCK_AES_IV_SIZE, ciphertext, msg_size, tag, 16);
   aes_mbedtls_release(&aes_engine);
 
   *state = 4;
@@ -76,13 +76,13 @@ int pit_encryption(uint8_t *msg, size_t msg_size, uint8_t *secret, size_t secret
 
 }
 
-int pit_decryption(uint8_t *ciphertext, size_t ciphertext_size, uint8_t *secret, size_t secret_length, uint8_t *AESIV, size_t AESIV_SIZE, uint8_t *tag, uint8_t *plaintext, int *state){
+int pit_decryption(uint8_t *ciphertext, size_t ciphertext_size, uint8_t *secret, size_t secret_length, uint8_t *tag, uint8_t *plaintext, int *state){
   struct aes_engine_mbedtls aes_engine;	
   aes_mbedtls_init (&aes_engine);
   aes_engine.base.set_key (&aes_engine.base, secret, secret_length);
 
   int stat = aes_engine.base.decrypt_data (&aes_engine.base, ciphertext, ciphertext_size,
-		tag, AESIV, AESIV_SIZE, plaintext, ciphertext_size);
+		tag, UNLOCK_AES_IV, UNLOCK_AES_IV_SIZE, plaintext, ciphertext_size);
   *state = 5;
   if(stat != 0){
     return PIT_CRYPTO_DECRYPTION_FAILED;
@@ -90,7 +90,7 @@ int pit_decryption(uint8_t *ciphertext, size_t ciphertext_size, uint8_t *secret,
   return SUCESS;
 }
 
-int pit_OTPgen(uint8_t *secret,  size_t secret_size, uint8_t *AESIV, size_t aesiv_size, uint8_t *tag, uint8_t *OTP, size_t OTPsize, uint8_t *OTPs, int *state){
+int pit_OTPgen(uint8_t *secret,  size_t secret_size, uint8_t *tag, uint8_t *OTP, size_t OTPsize, uint8_t *OTPs, int *state){
   struct rng_engine_mbedtls engine;
 	int status;
 	status = rng_mbedtls_init (&engine);
@@ -99,7 +99,7 @@ int pit_OTPgen(uint8_t *secret,  size_t secret_size, uint8_t *AESIV, size_t aesi
     return PIT_CRYPTO_OTP_GENERATION_FAILED;
   }
 
-status = pit_encryption(OTP, OTPsize, secret, secret_size, AESIV, aesiv_size, tag, OTPs, state);
+status = pit_encryption(OTP, OTPsize, secret, secret_size, tag, OTPs, state);
 
 if(status != 1){
   return PIT_CRYPTO_ENCRYPTION_FAILED;
@@ -110,14 +110,14 @@ return SUCESS;
 }
 
 
-int pit_OTPvalidation(uint8_t * secret, size_t secret_size, uint8_t *AESIV, size_t AESIV_size, uint8_t *tag, uint8_t *OTPs, size_t OTPs_size, uint8_t *valOTP, bool *result, int *state){
+int pit_OTPvalidation(uint8_t * secret, size_t secret_size, uint8_t *tag, uint8_t *OTPs, size_t OTPs_size, uint8_t *valOTP, bool *result, int *state){
   struct aes_engine_mbedtls aes_engine;	
   aes_mbedtls_init (&aes_engine);
   aes_engine.base.set_key (&aes_engine.base, secret, secret_size);
 
   uint8_t plaintext[OTPs_size];
   int stat = aes_engine.base.decrypt_data (&aes_engine.base, OTPs, OTPs_size,
-		tag, AESIV, AESIV_size, plaintext, OTPs_size);
+		tag, UNLOCK_AES_IV, UNLOCK_AES_IV_SIZE, plaintext, OTPs_size);
 
   if(stat != 0){
     return PIT_CRYPTO_DECRYPTION_FAILED;

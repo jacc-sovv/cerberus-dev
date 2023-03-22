@@ -141,7 +141,7 @@ static void test_encryptionPID(CuTest *test){
     uint8_t ciphertext[msg_length];
     uint8_t tag[16];    //Tags are always length 16
 
-    status = pit_encryption(msg, msg_length, secret1, sizeof(secret1), AES_IV_TESTING, sizeof(AES_IV_TESTING), tag, ciphertext, &state);
+    status = pit_encryption(msg, msg_length, secret1, sizeof(secret1), tag, ciphertext, &state);
 
     CuAssertIntEquals(test, 1, status);
     CuAssertIntEquals(test, 4, state);
@@ -184,10 +184,10 @@ static void test_decryption(CuTest *test){
     uint8_t ciphertext[msg_length];
     uint8_t tag[16];    //Tags are always length 16
 
-    status = pit_encryption(msg, msg_length, secret1, sizeof(secret1), AES_IV_TESTING, sizeof(AES_IV_TESTING), tag, ciphertext, &state);
+    status = pit_encryption(msg, msg_length, secret1, sizeof(secret1), tag, ciphertext, &state);
     
     uint8_t decrypted_msg[msg_length];
-    status = pit_decryption(ciphertext, sizeof(ciphertext), secret1, sizeof(secret1), AES_IV_TESTING, sizeof(AES_IV_TESTING), tag, decrypted_msg, &state);
+    status = pit_decryption(ciphertext, sizeof(ciphertext), secret1, sizeof(secret1), tag, decrypted_msg, &state);
     CuAssertIntEquals(test, 1, status);
     
     status = testing_validate_array (msg, decrypted_msg, sizeof(decrypted_msg));
@@ -248,7 +248,7 @@ static void test_OTPgen(CuTest *test){
     uint8_t tag[16];
     uint8_t OTP[OTPsize];
     uint8_t OTPs[OTPsize];
-    status = pit_OTPgen(secret, sizeof(secret), AES_IV_TESTING, sizeof(AES_IV_TESTING), tag, OTP, OTPsize, OTPs, &state);
+    status = pit_OTPgen(secret, sizeof(secret), tag, OTP, OTPsize, OTPs, &state);
     CuAssertPtrNotNull(test, OTPs);
     CuAssertIntEquals(test, 1, status);
     CuAssertIntEquals(test, 6, state);
@@ -286,13 +286,13 @@ static void test_OTPvalidation(CuTest *test){
     uint8_t tag[16];
     uint8_t OTP[OTPsize];
     uint8_t OTPs[OTPsize];
-    status = pit_OTPgen(secret, sizeof(secret), AES_IV_TESTING, sizeof(AES_IV_TESTING), tag, OTP, OTPsize, OTPs, &state);
+    status = pit_OTPgen(secret, sizeof(secret),tag, OTP, OTPsize, OTPs, &state);
     CuAssertPtrNotNull(test, OTPs);
     CuAssertIntEquals(test, 1, status);
     CuAssertIntEquals(test, 6, state);
 
     bool result;
-    status = pit_OTPvalidation(secret, sizeof(secret), AES_IV_TESTING, sizeof(AES_IV_TESTING), tag, OTPs, sizeof(OTPs), OTP, &result, &state);
+    status = pit_OTPvalidation(secret, sizeof(secret), tag, OTPs, sizeof(OTPs), OTP, &result, &state);
 
     CuAssertIntEquals(test, 1, result);
     CuAssertIntEquals(test, 7, state);

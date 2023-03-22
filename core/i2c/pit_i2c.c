@@ -46,30 +46,30 @@ int keyexchangestate(uint8_t *pubkey_cli, size_t pubkey_der_length, uint8_t *pub
 
   recv(sock, pubkey_serv, pubkey_der_length, 0); //Receive the server's public key (DER Format)
 
-  return PIT_I2C_SEND_UNLOCK_INFO_SUCESS;
+  return SUCESS;
 }
 
 
 
-int send_unlock_info(uint8_t *OTPs, size_t OTPs_size, uint8_t *unlock_aes_iv, size_t unlock_aes_iv_size, uint8_t *OTP_tag, uint8_t *server_encrypted_message, uint8_t *server_tag){
+int send_unlock_info(uint8_t *OTPs, size_t OTPs_size, uint8_t *OTP_tag, uint8_t *server_encrypted_message, uint8_t *server_tag){
   int sock = pit_connect(5573);
   send(sock, OTPs, OTPs_size, 0);                    //Send OTPs
-  send(sock, unlock_aes_iv, unlock_aes_iv_size, 0);  //Send the IV for the AES cipher
+  send(sock, UNLOCK_AES_IV, UNLOCK_AES_IV_SIZE, 0);  //Send the IV for the AES cipher
   send(sock, OTP_tag, 16, 0);                        //Send AES-GCM tag
 
   recv(sock, server_encrypted_message, OTPs_size, 0);      //Received server's encrypted message (OTPs)
   recv(sock, server_tag, 16, 0);                     //Receive server's message tag
 
-  return PIT_I2C_KEY_EXCHANGE_SUCESS;
+  return SUCESS;
 }
 
 
-int receive_product_info(uint8_t *EncryptedProductID, uint8_t *EncryptedProductIDTag, size_t ProductIDSize, uint8_t *aes_iv, size_t aes_iv_size){
+int receive_product_info(uint8_t *EncryptedProductID, uint8_t *EncryptedProductIDTag, size_t ProductIDSize){
   //printf("Trying to connect in receive_product_info...\n");
   int sock = pit_connect(5574);
-  send(sock, aes_iv, aes_iv_size, 0);
+  send(sock, UNLOCK_AES_IV, UNLOCK_AES_IV_SIZE, 0);
   recv(sock, EncryptedProductID, ProductIDSize, 0);
   recv(sock, EncryptedProductIDTag, 16, 0);
-  return PIT_I2C_RECEIVE_PRODUCT_INFO_SUCESS;
+  return SUCESS;
 
 }
