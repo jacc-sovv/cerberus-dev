@@ -8,7 +8,6 @@
 
 #define PRODUCT_ID "ABCDEFGHIJKLMNOP"
 #define SUCESS 1
-// #define UNLOCK_AES_IV (uint8_t[]) {0x20,0x21,0x22,0x23,0x24,0x25,0x26,0x27,0x28,0x29,0x2a,0x2b}
 
 /**
  * Sets up needed variables and sets the systems state to lock.
