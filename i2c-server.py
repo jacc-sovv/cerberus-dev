@@ -59,6 +59,33 @@ conn.sendall(server_public_der)
 conn.close()
 s.close()
 
+##Start of changes
+print()
+print("Generating shared secret...")
+shared_secret = server_private_key.exchange(ec.ECDH(), client_public_key)
+
+# #Encrypt a product ID, send it over
+# s2 = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+# s2.bind((HOST, 5574))
+# s2.listen()
+# print("listening")
+# conn_pid, addr_pid = s2.accept()
+
+# iv = conn_pid.recv(IV_SIZE)
+
+# PID = b"ABCDEFGHIJKLMNOP"
+# aes_pid = AESGCM(shared_secret)
+# ePID = aes_pid.encrypt(iv, PID, None)
+# pid_tag = ePID[-16:]
+# ePID = ePID[:-16]
+
+# conn_pid.sendall(ePID)
+# conn_pid.sendall(pid_tag)
+# s2.close()
+
+##End of changes
+
+
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.bind((HOST, 5573))
 s.listen()
@@ -73,9 +100,7 @@ client_tag = conn.recv(TAG_SIZE)
 
 
 
-print()
-print("Generating shared secret...")
-shared_secret = server_private_key.exchange(ec.ECDH(), client_public_key)
+
 
 
 aesgcm = AESGCM(shared_secret)
@@ -88,6 +113,10 @@ with open("OTP", "wb") as f:
 print("[DEMO(1)]: Decrypting OTP to showcase it is the same on the client and server. Original OTP is")
 os.system("cat OTP")
 print()
+
+
+
+
 difference = 128 - len(client_otp)
 full_message = client_otp + (b'\0' * difference)
 aes_send = AESGCM(shared_secret)
